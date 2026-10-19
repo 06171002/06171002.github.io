@@ -25,6 +25,8 @@ const GENERIC_CLASSES = [
     'DataJpaTest',
     'NotBlank',
     'ShedLock',
+    'MapStruct',
+    'TanStack',
     'WhisperLive',
     'ValueError',
     'StopIteration',
