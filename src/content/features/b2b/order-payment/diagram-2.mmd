@@ -1,0 +1,27 @@
+stateDiagram-v2
+    state "주문요청대기" as s1
+    state "주문요청" as s2
+    state "결재대기" as s3
+    state "결재중" as s4
+    state "결재완료" as s5
+    state "신규주문" as s6
+    state "주문확인" as s7
+    state "접수중" as s8
+    state "접수완료" as s9
+    state "배송중" as s10
+    state "배송완료" as s11
+    state "주문요청취소" as s12
+    state "주문취소" as s13
+    s1 --> s2
+    s2 --> s3 : 결재 필요
+    s2 --> s6 : 결재 불필요
+    s3 --> s4
+    s4 --> s5
+    s5 --> s6
+    s6 --> s7
+    s7 --> s8
+    s8 --> s9
+    s9 --> s10
+    s10 --> s11
+    s2 --> s12 : 주문취소
+    s6 --> s13 : 주문취소
