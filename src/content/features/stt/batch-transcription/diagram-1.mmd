@@ -1,0 +1,7 @@
+flowchart LR
+    UP["파일 업로드"] --> API["전사 요청<br/>202 Accepted"]
+    API --> CEL["Celery 워커"]
+    CEL --> STT["STT 세그먼트<br/>(DB 저장 + Pub/Sub)"]
+    STT --> LLM["LLM 구조화 요약"]
+    LLM --> DONE["완료"]
+    SSE["진행 상황 구독<br/>(SSE)"] -.->|"Redis Pub/Sub"| STT
