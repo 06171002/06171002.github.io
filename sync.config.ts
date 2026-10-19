@@ -28,7 +28,7 @@ export const features: FeatureEntry[] = [
     { project: 'b2b', slug: 'claims', order: 4, evidence: ['tested', 'measured'], publish: true },
     { project: 'b2b', slug: 'order-payment', order: 5, evidence: ['measured', 'tested'], publish: true },
     { project: 'b2b', slug: 'cart', order: 6, evidence: ['measured', 'tested'], publish: true },
-    { project: 'b2b', slug: 'company-join-request', order: 7, evidence: [], publish: false },
+    { project: 'b2b', slug: 'company-join-request', order: 7, evidence: ['tested'], publish: true },
     // 실시간 음성 전사·요약 STT 서버
     { project: 'stt', slug: 'batch-transcription', order: 1, evidence: ['tested'], publish: true },
     { project: 'stt', slug: 'engine-abstraction', order: 2, evidence: ['measured'], publish: true },

@@ -1,0 +1,22 @@
+erDiagram
+    REQ["가입 요청"]
+    HIST["요청 이력"]
+    COM["기업 마스터"]
+    CUS["고객사 정보"]
+    SUP["공급사 정보"]
+    CRD["여신 정보"]
+    STL["정산 정보"]
+    SVC["서비스 구독"]
+    AUTH["권한그룹"]
+    USR["사용자"]
+    UAG["사용자 권한그룹"]
+    REQ ||--o{ HIST : "상태변경 이력"
+    COM ||--o{ REQ : "기업-가입요청"
+    COM ||--o{ CUS : "고객사 정보"
+    COM ||--o{ SUP : "공급사 정보"
+    COM ||--o{ CRD : "여신정보"
+    COM ||--o{ STL : "정산정보"
+    COM ||--o{ SVC : "서비스 구독"
+    COM ||--o{ AUTH : "권한그룹"
+    COM ||--o{ USR : "사용자"
+    USR ||--o{ UAG : "슈퍼관리자 권한"
