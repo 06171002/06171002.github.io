@@ -1,0 +1,12 @@
+stateDiagram-v2
+    state "진행 중" as s1
+    state "요약 중" as s2
+    state "완료" as s3
+    state "실패" as s4
+    [*] --> s1: 방 생성
+    s1 --> s2: 전원 완료 (준비됨)
+    s1 --> s4: 전원 실패
+    s2 --> s3: 통합 요약 저장
+    s2 --> s4: 요약 실패 (재시도 소진)
+    s3 --> [*]
+    s4 --> [*]

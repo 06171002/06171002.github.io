@@ -33,6 +33,6 @@ export const features: FeatureEntry[] = [
     { project: 'stt', slug: 'batch-transcription', order: 1, evidence: ['tested'], publish: true },
     { project: 'stt', slug: 'engine-abstraction', order: 2, evidence: ['measured'], publish: true },
     { project: 'stt', slug: 'async-queue-observability', order: 3, evidence: ['tested', 'measured'], publish: true },
-    { project: 'stt', slug: 'room-summary', order: 4, evidence: ['tested', 'measured'], publish: false },
+    { project: 'stt', slug: 'room-summary', order: 4, evidence: ['tested', 'measured'], publish: true },
     { project: 'stt', slug: 'realtime-stt', order: 5, evidence: ['tested', 'measured'], publish: true },
 ];
