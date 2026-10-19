@@ -1,0 +1,20 @@
+stateDiagram-v2
+    state "교환 신청" as e1
+    state "교환 승인" as e2
+    state "수거중" as e3
+    state "수거 완료" as e4
+    state "검수 합격" as e5
+    state "검수 불합격" as e6
+    state "재배송중" as e7
+    state "반송중" as e8
+    state "교환 완료" as e9
+    [*] --> e1: 신청
+    e1 --> e2: 승인 (+마이너스 PO)
+    e2 --> e3: 수거송장
+    e3 --> e4: 수거완료
+    e4 --> e5: 검수합격
+    e4 --> e6: 검수불합격
+    e4 --> e7: 검수 스킵·재배송 (+플러스 PO)
+    e5 --> e7: 재배송 (+플러스 PO)
+    e6 --> e8: 반송
+    e7 --> e9: 배송완료(배치)

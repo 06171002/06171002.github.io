@@ -1,0 +1,20 @@
+erDiagram
+    SO["주문"]
+    SOL["주문 라인"]
+    PO["발주"]
+    PAY["결제"]
+    CLAIM["클레임 헤더"]
+    LINE["클레임 라인"]
+    PICKUP["수거(박스)"]
+    REFUND["환불 내역"]
+    HIST["상태 이력"]
+    SO ||--o{ CLAIM : "주문 단위 신청"
+    CLAIM ||--o{ LINE : "1:N SKU/분할"
+    CLAIM ||--o{ PICKUP : "1:N 수거(박스)"
+    CLAIM ||--o{ REFUND : "1:N 환불수단"
+    CLAIM ||--o{ HIST : "1:N 상태이력"
+    PICKUP ||--o{ LINE : "박스 → 라인"
+    LINE ||--o{ LINE : "부모 라인 분할"
+    SOL ||--o{ LINE : "원주문 상품"
+    PO ||--o{ CLAIM : "마이너스 PO"
+    PAY ||--o{ REFUND : "원결제 역참조"

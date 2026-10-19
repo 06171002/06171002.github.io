@@ -25,7 +25,7 @@ export const features: FeatureEntry[] = [
     { project: 'b2b', slug: 'order-deadlock', order: 1, evidence: ['measured'], publish: false },
     { project: 'b2b', slug: 'direct-trade', order: 2, evidence: ['measured'], publish: false },
     { project: 'b2b', slug: 'supplier-po-delivery', order: 3, evidence: ['tested'], publish: false },
-    { project: 'b2b', slug: 'claims', order: 4, evidence: ['tested', 'measured'], publish: false },
+    { project: 'b2b', slug: 'claims', order: 4, evidence: ['tested', 'measured'], publish: true },
     { project: 'b2b', slug: 'order-payment', order: 5, evidence: ['measured', 'tested'], publish: false },
     { project: 'b2b', slug: 'cart', order: 6, evidence: ['measured', 'tested'], publish: true },
     { project: 'b2b', slug: 'company-join-request', order: 7, evidence: [], publish: false },

@@ -1,0 +1,12 @@
+stateDiagram-v2
+    state "취소 신청" as c1
+    state "취소 승인" as c2
+    state "취소 거절" as c3
+    state "취소 철회" as c4
+    state "취소 완료" as c5
+    [*] --> c1: 신청
+    [*] --> c5: 즉시완료(고객 자발/결재반려 자동)
+    c1 --> c2: 승인
+    c1 --> c3: 거절
+    c1 --> c4: 철회
+    c2 --> c5: 완료(환불)

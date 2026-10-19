@@ -1,0 +1,22 @@
+stateDiagram-v2
+    state "반품 신청" as r1
+    state "반품 승인" as r2
+    state "반품 반려" as r3
+    state "수거중" as r4
+    state "수거 완료" as r5
+    state "반품 완료" as r6
+    state "검수 합격" as r7
+    state "검수 불합격" as r8
+    state "반송중" as r9
+    state "반송 완료" as r10
+    [*] --> r1: 신청
+    r1 --> r2: 승인 (+마이너스 PO)
+    r1 --> r3: 반려
+    r2 --> r4: 수거송장 등록
+    r4 --> r5: 수거완료
+    r4 --> r6: 검수 스킵·환불
+    r5 --> r7: 검수합격
+    r5 --> r8: 검수불합격
+    r7 --> r6: 환불
+    r8 --> r9: 반송
+    r9 --> r10: 반송완료(배치)
