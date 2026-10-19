@@ -1,0 +1,11 @@
+erDiagram
+    SO["주문"]
+    SOL["주문 라인"]
+    PO["발주"]
+    POL["발주 라인"]
+    POD["발주 배송(출고 1건)"]
+    SO ||--o{ PO : "공급사별 분리"
+    SOL ||--o| POL : "N:1 SKU 집계"
+    PO ||--o{ POL : "1:N"
+    POL ||--o{ POD : "1:N 분할출고"
+    SOL ||--o{ POD : "1:1 출고 재매칭"
