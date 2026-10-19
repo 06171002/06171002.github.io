@@ -178,5 +178,11 @@ export function toPhrasing(segments: Segment[], lineBreak: 'node' | 'html' = 'no
             if (part) out.push(...formatted({ ...segment, text: part }));
         });
     }
+    // 블록 끝의 줄바꿈은 떼어 낸다 — CommonMark 는 문단 끝 역슬래시를 글자 그대로 찍는다
+    while (out.length > 0 && isBreak(out.at(-1)!)) out.pop();
     return out;
+}
+
+function isBreak(node: PhrasingContent): boolean {
+    return node.type === 'break' || (node.type === 'html' && node.value === '<br>');
 }
