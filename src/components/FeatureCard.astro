@@ -8,22 +8,17 @@ interface Props {
 
 const { entry } = Astro.props;
 const data = entry.data;
-// 노션 커버 이미지 대신 카드 데이터로 같은 모양을 그린다 — 다크 모드에서도 어울리고, 커버 없는 카드도 같은 모양이 된다
-const stats = [
-    data.tableCount !== null ? `${data.tableCount} 테이블` : null,
-    data.apiCount !== null ? `${data.apiCount} API` : null,
-].filter(Boolean);
+// 노션 커버 이미지 대신 카드 데이터로 같은 모양을 그린다 — 다크 모드에서도 어울리고, 커버 없는 카드도 같은 모양이 된다.
+// API 수 · 테이블 수는 프로젝트 내부 정보라 싣지 않는다 (docs/design.md 6.5) → 표지엔 앞 키워드 2개, 본문엔 그다음 키워드
+const coverKeywords = data.keywords.slice(0, 2);
+const bodyKeywords = data.keywords.slice(2, 5);
 ---
 
 <li class={`feature-card project-${data.project}`}>
     <a href={`/${data.project}/${entry.id}/`}>
         <div class="feature-cover" aria-hidden="true">
             {data.domain && <span class="feature-domain">{data.domain}</span>}
-            {stats.length > 0 ? (
-                <span class="feature-stats">{stats.join(' · ')}</span>
-            ) : (
-                <span class="feature-stats is-keyword">{data.keywords.slice(0, 2).join(' · ')}</span>
-            )}
+            {coverKeywords.length > 0 && <span class="feature-cover-keywords">{coverKeywords.join(' · ')}</span>}
         </div>
         <div class="feature-body">
             <h3 class="feature-title">
@@ -31,7 +26,7 @@ const stats = [
                 {data.draft && <span class="draft-tag">초안</span>}
             </h3>
             <EvidenceBadges kinds={data.evidence} />
-            {data.keywords.length > 0 && <p class="feature-keywords">{data.keywords.slice(0, 3).join(' · ')}</p>}
+            {bodyKeywords.length > 0 && <p class="feature-keywords">{bodyKeywords.join(' · ')}</p>}
         </div>
     </a>
 </li>
@@ -86,15 +81,8 @@ const stats = [
         line-height: 1.6;
     }
 
-    .feature-stats {
+    .feature-cover-keywords {
         color: var(--project-color);
-        font-size: 1.0625rem;
-        font-weight: 700;
-        letter-spacing: -0.01em;
-    }
-
-    /* 테이블 · API 수가 없는 카드는 키워드를 수치처럼 보이지 않게 가볍게 */
-    .feature-stats.is-keyword {
         font-size: var(--text-sm);
         font-weight: 600;
     }

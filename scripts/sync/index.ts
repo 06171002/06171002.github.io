@@ -43,11 +43,6 @@ function selectProp(properties: Properties, name: string): string | null {
     return value?.type === 'select' ? (value.select?.name ?? null) : null;
 }
 
-function numberProp(properties: Properties, name: string): number | null {
-    const value = properties[name];
-    return value?.type === 'number' ? value.number : null;
-}
-
 function textProp(properties: Properties, name: string): string {
     const value = properties[name];
     return value?.type === 'rich_text' ? value.rich_text.map((item) => item.plain_text).join('') : '';
@@ -100,8 +95,7 @@ function featureFrontmatter(
         project: entry.project,
         order: entry.order,
         domain: selectProp(properties, '도메인'),
-        apiCount: numberProp(properties, 'API 수'),
-        tableCount: numberProp(properties, '테이블 수'),
+        // 노션의 'API 수' · '테이블 수' 는 프로젝트 내부 정보라 읽지 않는다 (docs/design.md 6.5)
         keywords,
         evidence: entry.evidence,
         draft: !entry.publish,

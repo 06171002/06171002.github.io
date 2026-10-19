@@ -3,6 +3,7 @@
 이상진의 포트폴리오 사이트 — https://06171002.github.io/
 
 - **콘텐츠 원본은 노션**이다. `pnpm sync` 가 노션을 Markdown 스냅샷으로 내려받고, 변경분을 검토한 뒤 커밋한다
+- 프로젝트 내부 정보(API · 테이블 · 코드 식별자 · 인프라 · 연동 업체 등)는 싣지 않는다. 동기화 대상은 노션 원문이 아니라 이를 일반화한 '공개용 카드' 사본이다 (설계 6.5)
 - 스택: Astro 7 · TypeScript · GitHub Pages
 - 설계: [docs/design.md](docs/design.md)
 

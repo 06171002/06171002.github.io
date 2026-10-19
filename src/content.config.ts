@@ -12,8 +12,6 @@ const features = defineCollection({
         project: z.enum(['b2b', 'stt']),
         order: z.number().int(),
         domain: z.string().nullable(),
-        apiCount: z.number().int().nullable(),
-        tableCount: z.number().int().nullable(),
         keywords: z.array(z.string()),
         evidence: z.array(z.enum(['measured', 'tested', 'static', 'estimated'])),
         draft: z.boolean(),

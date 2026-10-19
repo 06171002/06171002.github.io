@@ -4,7 +4,64 @@
 export interface GuardPattern {
     name: string;
     regex: RegExp;
+    /** 이 규칙에 걸려도 통과시킬 표현 — 프로젝트와 무관한 표준 라이브러리 · 오픈소스 · 문법 용어만 둔다 */
+    allow?: readonly string[];
 }
+
+// 공개본은 실제 시스템의 식별자 대신 개념 이름으로 쓴다 (docs/design.md 6.5) — 아래 식별자 규칙들이 그 기준을 지킨다
+const GENERIC_CLASSES = [
+    'LocalDate',
+    'LocalDateTime',
+    'BigDecimal',
+    'ThreadPool',
+    'ThreadPoolExecutor',
+    'WebSocket',
+    'WebSocketDisconnect',
+    'NullPool',
+    'NumPy',
+    'MyBatis',
+    'MybatisTest',
+    'WebMvcTest',
+    'DataJpaTest',
+    'NotBlank',
+    'ShedLock',
+    'WhisperLive',
+    'ValueError',
+    'StopIteration',
+    'GitHub',
+    'JavaScript',
+    'TypeScript',
+    'PowerShell',
+];
+const GENERIC_MEMBERS = [
+    'erDiagram',
+    'stateDiagram',
+    'classDiagram',
+    'sequenceDiagram',
+    'notionEditedAt',
+    'entrySet',
+    'getKey',
+    'getValue',
+    'setValue',
+    'getMessage',
+    'hasNext',
+    'hasPrevious',
+    'isBefore',
+    'isAfter',
+    'parseLong',
+    'toString',
+    'valueOf',
+    'maxDuration',
+];
+const GENERIC_SNAKE_CALLS = [
+    'get_event_loop',
+    'run_in_executor',
+    'run_until_complete',
+    'create_task',
+    'to_thread',
+    'create_async_engine',
+];
+const GENERIC_UPPER = ['AUTO_INCREMENT', 'LAST_INSERT_ID', 'ROW_COUNT', 'PESSIMISTIC_WRITE', 'REC_NOT_GAP'];
 
 export const publicPatterns: GuardPattern[] = [
     { name: '내부 테이블 접두사', regex: /\b[Tt]_[A-Za-z][A-Za-z0-9_]*/g },
@@ -18,6 +75,15 @@ export const publicPatterns: GuardPattern[] = [
         name: 'API 경로',
         regex: /\b(?:GET|POST|PUT|PATCH|DELETE)\s+\/[\w/{}:.-]+|(?<![\w.:/])\/(?:api|ws|public)(?:\/[\w{}:.-]+)+/g,
     },
-    { name: '파일:라인 참조', regex: /\b[\w.-]+\.(?:py|java|kt|ts|tsx|js|mjs|sql|xml|ya?ml|json|txt):\d+\b/g },
+    { name: '파일 이름', regex: /\b[\w-]+(?:\.[\w-]+)*\.(?:py|java|kt|sql|xml|ya?ml|json|txt|properties)\b/g },
+    {
+        name: '대문자 식별자(테이블 · 컬럼 · 코드값 · 설정)',
+        regex: /\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+\b/g,
+        allow: GENERIC_UPPER,
+    },
+    { name: '클래스 이름', regex: /\b[A-Z][a-z0-9]+(?:[A-Z][a-z0-9]+)+\b/g, allow: GENERIC_CLASSES },
+    { name: '필드 · 메서드 이름', regex: /\b[a-z][a-z0-9]*(?:[A-Z][a-z0-9]+)+\b/g, allow: GENERIC_MEMBERS },
+    { name: '함수 이름', regex: /\b[a-z][a-z0-9]*(?:_[a-z0-9]+)+(?=\s*\()/g, allow: GENERIC_SNAKE_CALLS },
+    { name: '인스턴스 사양', regex: /\b[a-z]\d[a-z]*\.\d*x?large\b|\b\d+\s*vCPU\b/gi },
     { name: '노션 링크', regex: /notion\.(?:so|site|com)\//gi },
 ];

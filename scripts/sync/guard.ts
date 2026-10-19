@@ -24,6 +24,7 @@ export function scan(text: string, denylist: string[]): GuardHit[] {
             }
             for (const pattern of publicPatterns) {
                 for (const match of line.matchAll(pattern.regex)) {
+                    if (pattern.allow?.includes(match[0])) continue;
                     hits.push({ rule: pattern.name, match: match[0], line: index + 1 });
                 }
             }
