@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.astro/
+pnpm-lock.yaml
+
+# Markdown 은 포맷하지 않는다 — 표 정렬 등으로 diff 가 불어난다. src/content/ 의 Markdown 은 동기화 결과물이다
+*.md

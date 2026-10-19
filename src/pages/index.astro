@@ -1,0 +1,50 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="이상진 · 백엔드 개발자" description="측정 가능한 시스템 개선에 집중하는 백엔드 개발자 이상진의 포트폴리오">
+    <main class="wrap">
+        <p class="eyebrow">Backend Developer</p>
+        <h1>이상진</h1>
+        <p class="lead">
+            반복되는 DB 왕복을 줄여 응답 지연을 낮추고, 동시 요청의 데이터 정합성을 보장하는 — 측정 가능한 시스템 개선에
+            집중합니다.
+        </p>
+        <p class="note">포트폴리오를 이 사이트로 옮기는 중입니다.</p>
+        <p>
+            <a href="https://github.com/06171002">github.com/06171002</a>
+        </p>
+    </main>
+</Base>
+
+<style>
+    .wrap {
+        max-width: 40rem;
+        margin: 0 auto;
+        padding: 4rem 1rem;
+    }
+
+    .eyebrow {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.875rem;
+        letter-spacing: 0.04em;
+    }
+
+    h1 {
+        margin: 0.25rem 0 1rem;
+        font-size: 2.25rem;
+        line-height: 1.2;
+    }
+
+    .lead {
+        margin: 0 0 1.5rem;
+        font-size: 1.125rem;
+    }
+
+    .note {
+        padding-left: 0.75rem;
+        border-left: 3px solid var(--border);
+        color: var(--muted);
+    }
+</style>

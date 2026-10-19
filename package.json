@@ -1,0 +1,32 @@
+{
+    "name": "06171002.github.io",
+    "type": "module",
+    "version": "0.0.0",
+    "private": true,
+    "packageManager": "pnpm@10.33.0",
+    "devEngines": {
+        "runtime": {
+            "name": "node",
+            "version": "24.22.0",
+            "onFail": "download"
+        }
+    },
+    "scripts": {
+        "dev": "astro dev",
+        "build": "astro check && astro build",
+        "preview": "astro preview",
+        "check": "astro check",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "astro": "astro"
+    },
+    "dependencies": {
+        "astro": "7.4.0"
+    },
+    "devDependencies": {
+        "@astrojs/check": "0.9.10",
+        "prettier": "3.9.10",
+        "prettier-plugin-astro": "1.1.1",
+        "typescript": "6.0.3"
+    }
+}

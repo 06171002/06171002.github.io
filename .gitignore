@@ -1,0 +1,20 @@
+# 의존성 · 빌드 산출물
+node_modules/
+dist/
+.astro/
+
+# 비공개 자료 — 원래 자리는 리포 밖 ../portfolio-private/ 다. 여기는 2차 안전장치
+.env
+.env.*
+!.env.example
+sync.local.json
+*.local.*
+public-review*.md
+portfolio-private/
+
+# 개인 설정 · 로그 · OS
+.claude/settings.local.json
+npm-debug.log*
+pnpm-debug.log*
+.DS_Store
+Thumbs.db

@@ -1,0 +1,48 @@
+/* M0 최소 토큰. 디자인 시스템은 M2 에서 확정한다 (docs/design.md 8장) */
+:root {
+    --bg: #ffffff;
+    --fg: #1b1d21;
+    --muted: #5d6470;
+    --accent: #2457d6;
+    --border: #e3e6eb;
+    color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #111317;
+        --fg: #e7e9ec;
+        --muted: #9ba2ad;
+        --accent: #86a8ff;
+        --border: #2b2f36;
+    }
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family:
+        system-ui,
+        -apple-system,
+        'Apple SD Gothic Neo',
+        'Malgun Gothic',
+        sans-serif;
+    line-height: 1.7;
+    word-break: keep-all;
+}
+
+a {
+    color: var(--accent);
+    text-underline-offset: 0.2em;
+}

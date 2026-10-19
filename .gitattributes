@@ -1,0 +1,10 @@
+# 전역 core.autocrlf 와 무관하게 작업 폴더도 LF 로 둔다 (.prettierrc endOfLine: lf 와 맞춤)
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.woff2 binary
