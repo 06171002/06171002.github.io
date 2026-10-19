@@ -17,6 +17,8 @@ const features = defineCollection({
         draft: z.boolean(),
         cover: z.string().nullable(),
         notionEditedAt: z.coerce.date(),
+        // 사본의 '요약' 속성 — 비어 있으면 상세 페이지가 개요 첫 문단으로 설명을 만든다
+        description: z.string().nullable().optional(),
     }),
 });
 

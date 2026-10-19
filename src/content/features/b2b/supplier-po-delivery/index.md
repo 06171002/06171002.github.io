@@ -9,6 +9,7 @@ evidence: ["tested"]
 draft: false
 cover: null
 notionEditedAt: "2026-08-31"
+description: null
 ---
 
 ## 개요
@@ -81,7 +82,7 @@ notionEditedAt: "2026-08-31"
 
 ### ERD (핵심 관계)
 
-<figure class="diagram"><img src="/content-assets/b2b/supplier-po-delivery/diagram-1.light.svg" alt="ERD (핵심 관계) 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/supplier-po-delivery/diagram-1.dark.svg" alt="" class="diagram-dark" loading="lazy" decoding="async" aria-hidden="true"></figure>
+<figure class="diagram"><img src="/content-assets/b2b/supplier-po-delivery/diagram-1.light.svg" alt="ERD (핵심 관계) 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/supplier-po-delivery/diagram-1.dark.svg" alt="ERD (핵심 관계) 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
 ### 발주 배송 — 출고 레코드 핵심
 
@@ -120,7 +121,7 @@ PO 라인 상태와 배송 상태를 분리.\
 
 </aside>
 
-<figure class="diagram"><img src="/content-assets/b2b/supplier-po-delivery/diagram-2.light.svg" alt="상태 머신 — 발주 처리 흐름 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/supplier-po-delivery/diagram-2.dark.svg" alt="" class="diagram-dark" loading="lazy" decoding="async" aria-hidden="true"></figure>
+<figure class="diagram"><img src="/content-assets/b2b/supplier-po-delivery/diagram-2.light.svg" alt="상태 머신 — 발주 처리 흐름 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/supplier-po-delivery/diagram-2.dark.svg" alt="상태 머신 — 발주 처리 흐름 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
 <aside class="callout tone-gray" data-icon="🚛">
 

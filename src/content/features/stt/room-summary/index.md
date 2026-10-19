@@ -9,6 +9,7 @@ evidence: ["tested","measured"]
 draft: false
 cover: null
 notionEditedAt: "2026-08-30"
+description: null
 ---
 
 ## 개요
@@ -58,7 +59,7 @@ WebRTC 다자 화상회의에서 **참가자별 STT 작업을 방(room) 단위�
 
 ## 방 상태 머신
 
-<figure class="diagram"><img src="/content-assets/stt/room-summary/diagram-1.light.svg" alt="방 상태 머신 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/room-summary/diagram-1.dark.svg" alt="" class="diagram-dark" loading="lazy" decoding="async" aria-hidden="true"></figure>
+<figure class="diagram"><img src="/content-assets/stt/room-summary/diagram-1.light.svg" alt="방 상태 머신 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/room-summary/diagram-1.dark.svg" alt="방 상태 머신 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
 ---
 
@@ -187,7 +188,7 @@ await 방 통합 요약 저장(방, 요약)
 
 ## 자동 요약 트리거 흐름
 
-<figure class="diagram"><img src="/content-assets/stt/room-summary/diagram-2.light.svg" alt="자동 요약 트리거 흐름 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/room-summary/diagram-2.dark.svg" alt="" class="diagram-dark" loading="lazy" decoding="async" aria-hidden="true"></figure>
+<figure class="diagram"><img src="/content-assets/stt/room-summary/diagram-2.light.svg" alt="자동 요약 트리거 흐름 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/room-summary/diagram-2.dark.svg" alt="자동 요약 트리거 흐름 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
 <aside class="callout tone-gray" data-icon="📌">
 

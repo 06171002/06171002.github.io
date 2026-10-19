@@ -9,6 +9,7 @@ evidence: ["tested","measured"]
 draft: false
 cover: null
 notionEditedAt: "2026-08-31"
+description: null
 ---
 
 ## 개요
@@ -85,7 +86,7 @@ B2B 클레임은 단순 환불이 아니다 — **부분 출고·여러 공급�
 
 ### ERD (핵심 관계)
 
-<figure class="diagram"><img src="/content-assets/b2b/claims/diagram-1.light.svg" alt="ERD (핵심 관계) 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/claims/diagram-1.dark.svg" alt="" class="diagram-dark" loading="lazy" decoding="async" aria-hidden="true"></figure>
+<figure class="diagram"><img src="/content-assets/b2b/claims/diagram-1.light.svg" alt="ERD (핵심 관계) 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/claims/diagram-1.dark.svg" alt="ERD (핵심 관계) 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
 ### 테이블 구성
 
@@ -133,15 +134,15 @@ B2B 클레임은 단순 환불이 아니다 — **부분 출고·여러 공급�
 
 **① 취소 — 물리 흐름 없음**
 
-<figure class="diagram"><img src="/content-assets/b2b/claims/diagram-2.light.svg" alt="상태 머신 — 유형별 (취소 / 반품 / 교환) 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/claims/diagram-2.dark.svg" alt="" class="diagram-dark" loading="lazy" decoding="async" aria-hidden="true"></figure>
+<figure class="diagram"><img src="/content-assets/b2b/claims/diagram-2.light.svg" alt="상태 머신 — 유형별 (취소 / 반품 / 교환) 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/claims/diagram-2.dark.svg" alt="상태 머신 — 유형별 (취소 / 반품 / 교환) 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
 **② 반품 — 공급사 주도, 환불로 종결**
 
-<figure class="diagram"><img src="/content-assets/b2b/claims/diagram-3.light.svg" alt="상태 머신 — 유형별 (취소 / 반품 / 교환) 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/claims/diagram-3.dark.svg" alt="" class="diagram-dark" loading="lazy" decoding="async" aria-hidden="true"></figure>
+<figure class="diagram"><img src="/content-assets/b2b/claims/diagram-3.light.svg" alt="상태 머신 — 유형별 (취소 / 반품 / 교환) 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/claims/diagram-3.dark.svg" alt="상태 머신 — 유형별 (취소 / 반품 / 교환) 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
 **③ 교환 — 수거 후 재배송으로 종결**
 
-<figure class="diagram"><img src="/content-assets/b2b/claims/diagram-4.light.svg" alt="상태 머신 — 유형별 (취소 / 반품 / 교환) 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/claims/diagram-4.dark.svg" alt="" class="diagram-dark" loading="lazy" decoding="async" aria-hidden="true"></figure>
+<figure class="diagram"><img src="/content-assets/b2b/claims/diagram-4.light.svg" alt="상태 머신 — 유형별 (취소 / 반품 / 교환) 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/claims/diagram-4.dark.svg" alt="상태 머신 — 유형별 (취소 / 반품 / 교환) 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
 ---
 

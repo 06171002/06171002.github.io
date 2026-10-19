@@ -9,6 +9,7 @@ evidence: ["tested"]
 draft: false
 cover: null
 notionEditedAt: "2026-08-31"
+description: null
 ---
 
 ## 개요
@@ -112,11 +113,11 @@ B2B 가입 워크플로우의 복잡성 — 단일 상태머신·단일 검증�
 
 ### 상태 전이 — 고객사
 
-<figure class="diagram"><img src="/content-assets/b2b/company-join-request/diagram-1.light.svg" alt="상태 전이 — 고객사 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/company-join-request/diagram-1.dark.svg" alt="" class="diagram-dark" loading="lazy" decoding="async" aria-hidden="true"></figure>
+<figure class="diagram"><img src="/content-assets/b2b/company-join-request/diagram-1.light.svg" alt="상태 전이 — 고객사 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/company-join-request/diagram-1.dark.svg" alt="상태 전이 — 고객사 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
 ### 상태 전이 — 공급사
 
-<figure class="diagram"><img src="/content-assets/b2b/company-join-request/diagram-2.light.svg" alt="상태 전이 — 공급사 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/company-join-request/diagram-2.dark.svg" alt="" class="diagram-dark" loading="lazy" decoding="async" aria-hidden="true"></figure>
+<figure class="diagram"><img src="/content-assets/b2b/company-join-request/diagram-2.light.svg" alt="상태 전이 — 공급사 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/company-join-request/diagram-2.dark.svg" alt="상태 전이 — 공급사 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
 <aside class="callout tone-purple" data-icon="🤖">
 
@@ -246,7 +247,7 @@ IAM 생성은 별도 서비스 커밋이라 <strong>롤백이 안 된다.</stron
 
 ### 승인 시 데이터 생성 흐름
 
-<figure class="diagram"><img src="/content-assets/b2b/company-join-request/diagram-3.light.svg" alt="승인 시 데이터 생성 흐름 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/company-join-request/diagram-3.dark.svg" alt="" class="diagram-dark" loading="lazy" decoding="async" aria-hidden="true"></figure>
+<figure class="diagram"><img src="/content-assets/b2b/company-join-request/diagram-3.light.svg" alt="승인 시 데이터 생성 흐름 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/company-join-request/diagram-3.dark.svg" alt="승인 시 데이터 생성 흐름 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
 <details class="heading-toggle h3">
 <summary>채널별 데이터 생성 범위</summary>
@@ -275,7 +276,7 @@ IAM 생성은 별도 서비스 커밋이라 <strong>롤백이 안 된다.</stron
 
 ## 4. ERD
 
-<figure class="diagram"><img src="/content-assets/b2b/company-join-request/diagram-4.light.svg" alt="4. ERD 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/company-join-request/diagram-4.dark.svg" alt="" class="diagram-dark" loading="lazy" decoding="async" aria-hidden="true"></figure>
+<figure class="diagram"><img src="/content-assets/b2b/company-join-request/diagram-4.light.svg" alt="4. ERD 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/company-join-request/diagram-4.dark.svg" alt="4. ERD 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
 ---
 

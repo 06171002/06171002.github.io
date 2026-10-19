@@ -254,7 +254,17 @@ a.chip:hover {
     color: inherit;
 }
 
+@page {
+    margin: 16mm 14mm;
+}
+
 @media print {
+    /* 다크 모드로 보고 있어도 종이에는 라이트 색으로 찍는다 (색 토큰이 light-dark() 라 이것만으로 바뀐다) */
+    :root,
+    :root[data-theme='dark'] {
+        color-scheme: light;
+    }
+
     .site-header,
     .site-footer,
     .theme-toggle,

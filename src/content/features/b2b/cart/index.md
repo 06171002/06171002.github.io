@@ -9,6 +9,7 @@ evidence: ["measured","tested"]
 draft: false
 cover: null
 notionEditedAt: "2026-08-31"
+description: null
 ---
 
 ## 개요
@@ -287,7 +288,7 @@ END LOOP
 
 ### 프로시저 동작 흐름
 
-<figure class="diagram"><img src="/content-assets/b2b/cart/diagram-1.light.svg" alt="프로시저 동작 흐름 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/cart/diagram-1.dark.svg" alt="" class="diagram-dark" loading="lazy" decoding="async" aria-hidden="true"></figure>
+<figure class="diagram"><img src="/content-assets/b2b/cart/diagram-1.light.svg" alt="프로시저 동작 흐름 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/cart/diagram-1.dark.svg" alt="프로시저 동작 흐름 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
 ### 프로시저 핵심 로직
 

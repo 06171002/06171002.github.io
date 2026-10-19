@@ -9,6 +9,7 @@ evidence: ["tested","measured"]
 draft: false
 cover: null
 notionEditedAt: "2026-08-31"
+description: null
 ---
 
 ## 개요
@@ -52,7 +53,7 @@ VAD가 발화 종료를 확정하기 전에 WebSocket이 끊기면, 버퍼에 �
 
 ## 처리 흐름
 
-<figure class="diagram"><img src="/content-assets/stt/realtime-stt/diagram-1.light.svg" alt="처리 흐름 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/realtime-stt/diagram-1.dark.svg" alt="" class="diagram-dark" loading="lazy" decoding="async" aria-hidden="true"></figure>
+<figure class="diagram"><img src="/content-assets/stt/realtime-stt/diagram-1.light.svg" alt="처리 흐름 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/realtime-stt/diagram-1.dark.svg" alt="처리 흐름 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
 ---
 

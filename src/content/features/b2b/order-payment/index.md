@@ -9,6 +9,7 @@ evidence: ["measured","tested"]
 draft: false
 cover: null
 notionEditedAt: "2026-09-06"
+description: null
 ---
 
 ## 개요
@@ -82,7 +83,7 @@ B2B 전용몰에서 하나의 주문(SO)에 여러 공급사의 상품이 포함
 
 ### ERD (핵심 관계)
 
-<figure class="diagram"><img src="/content-assets/b2b/order-payment/diagram-1.light.svg" alt="ERD (핵심 관계) 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/order-payment/diagram-1.dark.svg" alt="" class="diagram-dark" loading="lazy" decoding="async" aria-hidden="true"></figure>
+<figure class="diagram"><img src="/content-assets/b2b/order-payment/diagram-1.light.svg" alt="ERD (핵심 관계) 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/order-payment/diagram-1.dark.svg" alt="ERD (핵심 관계) 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
 ### 테이블별 설계 의도
 
@@ -101,7 +102,7 @@ B2B 전용몰에서 하나의 주문(SO)에 여러 공급사의 상품이 포함
 
 <strong>주문 상태 머신 (13개):</strong>
 
-<figure class="diagram"><img src="/content-assets/b2b/order-payment/diagram-2.light.svg" alt="테이블별 설계 의도 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/order-payment/diagram-2.dark.svg" alt="" class="diagram-dark" loading="lazy" decoding="async" aria-hidden="true"></figure>
+<figure class="diagram"><img src="/content-assets/b2b/order-payment/diagram-2.light.svg" alt="테이블별 설계 의도 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/order-payment/diagram-2.dark.svg" alt="테이블별 설계 의도 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
 ---
 
@@ -287,7 +288,7 @@ export default function () {
 
 프로시저 처리 순서:
 
-<figure class="diagram"><img src="/content-assets/b2b/order-payment/diagram-3.light.svg" alt="성능 비교 (주문 1건 · 장바구니 20라인 기준) 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/order-payment/diagram-3.dark.svg" alt="" class="diagram-dark" loading="lazy" decoding="async" aria-hidden="true"></figure>
+<figure class="diagram"><img src="/content-assets/b2b/order-payment/diagram-3.light.svg" alt="성능 비교 (주문 1건 · 장바구니 20라인 기준) 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/order-payment/diagram-3.dark.svg" alt="성능 비교 (주문 1건 · 장바구니 20라인 기준) 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
 ### 2. 스냅샷 전략 — 3개 원본 → 3개 대상 복사
 
@@ -322,7 +323,7 @@ SO 전체가 "배송중"이더라도, 개별 발주 라인은 공급사별로 �
 
 ### 4. 결제 이중 경로
 
-<figure class="diagram"><img src="/content-assets/b2b/order-payment/diagram-4.light.svg" alt="4. 결제 이중 경로 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/order-payment/diagram-4.dark.svg" alt="" class="diagram-dark" loading="lazy" decoding="async" aria-hidden="true"></figure>
+<figure class="diagram"><img src="/content-assets/b2b/order-payment/diagram-4.light.svg" alt="4. 결제 이중 경로 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/order-payment/diagram-4.dark.svg" alt="4. 결제 이중 경로 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
 - **PG 결제**: PG 결제창 → 승인 → 결제 키로 서버 확인(결제 승인 API) → **발주 생성**
 - **여신/예산**: 앱 계층에서 기업 여신 행 `FOR UPDATE` 잠금 + 차감 → **발주 생성** → 즉시 완료

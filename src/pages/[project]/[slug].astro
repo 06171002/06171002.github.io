@@ -4,6 +4,7 @@ import { getCollection, render } from 'astro:content';
 import EvidenceBadges from '../../components/EvidenceBadges.astro';
 import Base from '../../layouts/Base.astro';
 import { projects } from '../../data/projects';
+import { describe } from '../../lib/describe';
 import '../../styles/content.css';
 
 export async function getStaticPaths() {
@@ -35,9 +36,19 @@ const basis = new Intl.DateTimeFormat('ko-KR', { dateStyle: 'long', timeZone: 'A
     data.notionEditedAt
 );
 const meta = [data.domain, `${basis} 기준`].filter(Boolean);
+// 검색 · 공유 설명: 사본의 '요약' 속성 → 개요 첫 문단 → 제목 + 키워드
+const description =
+    data.description ?? describe(entry.body ?? '') ?? `${data.title} — ${project.name}. ${data.keywords.join(' · ')}`;
 ---
 
-<Base title={`${data.title} · 이상진`} description={`${project.name} — ${data.title}`}>
+<Base
+    title={`${data.title} · 이상진`}
+    description={description}
+    image={`/og/${data.project}/${entry.id}.png`}
+    imageAlt={`${project.name} — ${data.title}`}
+    type="article"
+    modified={data.notionEditedAt}
+>
     <main id="main" class="article">
         <article class="article-main">
             {data.draft && <p class="draft-banner">초안 · 공개 점검 전이라 배포되지 않는 페이지입니다</p>}

@@ -23,7 +23,7 @@
     --surface-strong: light-dark(#eef0f3, #1f232a);
     --fg: light-dark(#17191d, #e8eaed);
     --muted: light-dark(#5b6270, #9aa1ac);
-    --subtle: light-dark(#7a818c, #7c838e);
+    --subtle: light-dark(#6b7280, #7c838e); /* 라이트 #7a818c 는 3.9:1 이라 푸터 글자가 기준(4.5:1)에 못 미쳤다 */
     --border: light-dark(#e4e7ec, #262a31);
     --border-strong: light-dark(#d0d5dc, #353a42);
     --accent: light-dark(#2457d6, #8aabff);
@@ -40,7 +40,7 @@
     --ev-estimated-bg: light-dark(#fbf3df, #2c2513);
 
     /* 프로젝트 색 (카드 띠) */
-    --project-b2b: light-dark(#4f7f25, #8fc46a);
+    --project-b2b: light-dark(#497622, #8fc46a); /* #4f7f25 는 카드 표지 바탕(--project-b2b-bg) 위에서 4.35:1 이었다 */
     --project-b2b-bg: light-dark(#f1f6ea, #18220f);
     --project-stt: light-dark(#6047b8, #a993ec);
     --project-stt-bg: light-dark(#f2effb, #1f1a33);

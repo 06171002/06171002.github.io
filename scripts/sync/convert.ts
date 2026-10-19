@@ -363,12 +363,13 @@ function code(block: BlockNode, state: State): BlockContent[] {
         dark: `${state.options.assetsBase}/${name}.dark.svg`,
     };
     state.diagrams.push(diagram);
-    // 같은 그림의 라이트 · 다크 두 벌. 화면 낭독기는 한 번만 읽도록 다크 쪽은 숨긴다
-    const img = (src: string, className: string, altText: string, hidden: boolean) =>
-        `<img src="${escapeAttr(src)}" alt="${escapeAttr(altText)}" class="${className}" loading="lazy" decoding="async"${hidden ? ' aria-hidden="true"' : ''}>`;
+    // 같은 그림의 라이트 · 다크 두 벌. 테마에 맞지 않는 쪽은 display:none 이라 화면 낭독기에도 하나만 남는다
+    // → 두 벌 모두 같은 alt 를 단다 (한쪽을 숨기면 그 테마에서는 그림 설명이 사라진다)
+    const img = (src: string, className: string) =>
+        `<img src="${escapeAttr(src)}" alt="${escapeAttr(alt)}" class="${className}" loading="lazy" decoding="async">`;
     return [
         html(
-            `<figure class="diagram">${img(diagram.light, 'diagram-light', alt, false)}${img(diagram.dark, 'diagram-dark', '', true)}</figure>`
+            `<figure class="diagram">${img(diagram.light, 'diagram-light')}${img(diagram.dark, 'diagram-dark')}</figure>`
         ),
     ];
 }

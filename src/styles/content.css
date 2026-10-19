@@ -220,8 +220,8 @@
     line-height: 1.6;
 }
 
-/* Shiki 이중 테마 — 시스템 다크이거나 토글로 다크를 고른 경우 */
-@media (prefers-color-scheme: dark) {
+/* Shiki 이중 테마 — 시스템 다크이거나 토글로 다크를 고른 경우. 인쇄는 늘 라이트라 화면에만 적용 */
+@media screen and (prefers-color-scheme: dark) {
     :root:not([data-theme='light']) .astro-code,
     :root:not([data-theme='light']) .astro-code span {
         color: var(--shiki-dark) !important;
@@ -232,13 +232,15 @@
     }
 }
 
-:root[data-theme='dark'] .astro-code,
-:root[data-theme='dark'] .astro-code span {
-    color: var(--shiki-dark) !important;
-    background-color: var(--shiki-dark-bg) !important;
-    font-style: var(--shiki-dark-font-style) !important;
-    font-weight: var(--shiki-dark-font-weight) !important;
-    text-decoration: var(--shiki-dark-text-decoration) !important;
+@media screen {
+    :root[data-theme='dark'] .astro-code,
+    :root[data-theme='dark'] .astro-code span {
+        color: var(--shiki-dark) !important;
+        background-color: var(--shiki-dark-bg) !important;
+        font-style: var(--shiki-dark-font-style) !important;
+        font-weight: var(--shiki-dark-font-weight) !important;
+        text-decoration: var(--shiki-dark-text-decoration) !important;
+    }
 }
 
 /* ---------- 표: 넓으면 표 안에서만 가로 스크롤 ---------- */
@@ -441,7 +443,7 @@ figure.diagram img {
     display: none;
 }
 
-@media (prefers-color-scheme: dark) {
+@media screen and (prefers-color-scheme: dark) {
     :root:not([data-theme='light']) .diagram-light {
         display: none;
     }
@@ -451,12 +453,14 @@ figure.diagram img {
     }
 }
 
-:root[data-theme='dark'] .diagram-light {
-    display: none;
-}
+@media screen {
+    :root[data-theme='dark'] .diagram-light {
+        display: none;
+    }
 
-:root[data-theme='dark'] .diagram-dark {
-    display: inline-block;
+    :root[data-theme='dark'] .diagram-dark {
+        display: inline-block;
+    }
 }
 
 /* ---------- 노션 글자색 · 배경색 ---------- */
@@ -571,6 +575,7 @@ mark[class^='bg-'] {
     text-align: right;
 }
 
+/* 인쇄 · PDF 저장 (docs/design.md 5.4) — 펼치기는 Base.astro 의 beforeprint */
 @media print {
     .toc-aside,
     .toc-mobile,
@@ -581,5 +586,45 @@ mark[class^='bg-'] {
     .article {
         display: block;
         padding-top: 0;
+    }
+
+    /* 화면에서 가로 스크롤로 보던 코드 · 표 · 다이어그램이 종이 밖으로 잘리지 않게 */
+    .prose pre,
+    .table-wrap,
+    figure.diagram {
+        overflow: visible;
+    }
+
+    .prose pre {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+
+    .prose h2,
+    .prose h3,
+    .prose h4,
+    .prose details > summary {
+        break-after: avoid;
+    }
+
+    .callout,
+    figure.diagram,
+    .table-wrap tr {
+        break-inside: avoid;
+    }
+
+    /* 콜아웃 · 배지 · 표 머리의 옅은 바탕색은 구조를 알려 주므로 종이에도 남긴다 */
+    .callout,
+    .badge,
+    mark,
+    .table-wrap th {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .prose a[data-print-url]::after {
+        content: ' (' attr(data-print-url) ')';
+        color: var(--muted);
+        font-size: 0.8em;
     }
 }

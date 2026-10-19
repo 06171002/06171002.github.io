@@ -9,6 +9,7 @@ evidence: ["measured"]
 draft: false
 cover: null
 notionEditedAt: "2026-08-31"
+description: null
 ---
 
 ## 개요

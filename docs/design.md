@@ -132,7 +132,7 @@ slug 는 영문 kebab-case 로 고정한다. 노션 제목이 바뀌어도 주�
 - 노션 원문 링크는 두지 않는다. 일반화하기 전 원문으로 가는 길이 되기 때문이다
 
 ### 5.4 인쇄
-상세 페이지를 브라우저 인쇄로 PDF 저장할 수 있게 한다. 헤더 · 목차 · 테마 토글은 숨기고, 토글과 접힌 코드는 모두 펼치고, 링크 뒤에 URL 을 표기한다.
+상세 페이지를 브라우저 인쇄로 PDF 저장할 수 있게 한다. 헤더 · 목차 · 테마 토글은 숨기고, 토글과 접힌 코드는 모두 펼치고, 링크 뒤에 URL 을 표기한다. 다크 테마에서 인쇄해도 라이트 색으로 찍고, 아직 불러오지 않은 지연 로딩 다이어그램도 인쇄 직전에 불러온다 (`beforeprint` 스크립트, M4).
 
 ---
 
@@ -268,7 +268,7 @@ PNG 커버는 글자를 검사할 수 없으므로 눈으로 확인한다.
 
 ## 7. 콘텐츠 모델
 
-노션 '공개용 카드' DB 속성(이름 · 도메인 · 핵심 키워드 · 기준일)과 대응시키고 Zod 로 검증한다. 동기화 결과가 스키마와 어긋나면 빌드가 실패한다.
+노션 '공개용 카드' DB 속성(이름 · 도메인 · 핵심 키워드 · 기준일 · 요약)과 대응시키고 Zod 로 검증한다. 동기화 결과가 스키마와 어긋나면 빌드가 실패한다.
 
 ```ts
 // src/content.config.ts (요지, Astro 7 기준)
@@ -291,6 +291,7 @@ const features = defineCollection({
     draft: z.boolean(),                         // publish: false 로 동기화된 초안 (6.7)
     cover: z.string().nullable(),               // 커버 경로 (public/content-assets/…)
     notionEditedAt: z.coerce.date(),            // 기준일 — 사본의 '기준일' 속성, 없으면 노션 마지막 수정일 (5.3)
+    description: z.string().nullable().optional(), // 요약 — 사본의 '요약' 속성(150자 이내). 비면 본문 '개요'의 첫 문단 (10장)
   }),
 });
 ```
@@ -305,7 +306,7 @@ const features = defineCollection({
 
 | 영역 | 결정 |
 |---|---|
-| 글꼴 | Pretendard Variable 동적 서브셋을 npm 패키지로 자체 호스팅 (외부 CDN 의존 없음), 코드는 시스템 고정폭 |
+| 글꼴 | Pretendard Variable 을 npm 패키지에서 자체 호스팅 (외부 CDN 의존 없음). 빌드가 끝나면 사이트에 쓰인 글자(약 900자)만 남긴 가변 서브셋 한 벌(약 150KB)을 만들어 preload 한다 (`src/integrations/font-subset.ts`, 11장). 코드는 시스템 고정폭 |
 | 한글 조판 | 본문 `word-break: keep-all`, 줄간격 1.7, 읽기 폭 약 68ch |
 | 색 | 중립 회색 + 포인트 1색 (노션 제목의 파랑을 이어받음). 모든 색은 CSS 토큰 (`--bg` `--fg` `--muted` `--accent` `--border` …) |
 | 콜아웃 톤 | 노션 7색에 대응하는 톤 토큰 + 의미 톤 3종(`scenario` · `evidence` · `limits`). 라이트 · 다크 각각 대비 4.5:1 이상 |
@@ -332,11 +333,13 @@ const features = defineCollection({
 │  ├─ content.config.ts
 │  ├─ content/features/{b2b,stt}/{slug}/index.md   # 공개 카드 (커밋)
 │  ├─ content/drafts/features/…                    # 초안 (gitignore)
-│  ├─ content/docs/{b2b,stt}/{slug}/index.md       # M3
 │  ├─ data/projects.ts (+ M2: profile · skills · highlights)
 │  ├─ components/ · layouts/
+│  ├─ lib/describe.ts · og.ts                      # 카드 요약 추출 · OG 이미지 그리기 (M4)
+│  ├─ integrations/font-subset.ts                  # 빌드 후 Pretendard 서브셋 (M4)
 │  ├─ pages/index.astro · [project]/index.astro · [project]/[slug].astro · 404.astro
-│  └─ styles/global.css · content.css
+│  ├─ pages/og/[...path].png.ts · sitemap.xml.ts · robots.txt.ts   # M4
+│  └─ styles/tokens.css · global.css · content.css
 ├─ public/content-assets/{project}/{slug}/          # 다이어그램 SVG · 커버 (초안은 drafts/ 아래, gitignore)
 ├─ docs/design.md             # 이 문서
 ├─ CLAUDE.md · README.md
@@ -358,7 +361,10 @@ const features = defineCollection({
 
 - 리포 Settings → Pages → Source 를 **GitHub Actions** 로 설정
 - `main` 에 push 하면: 설치 → 2차 가드 → `astro check` → `astro build` → `withastro/action` + `actions/deploy-pages`
-- sitemap(`@astrojs/sitemap`) · `robots.txt` · 페이지별 title/description/OG 이미지 · `lang="ko"`
+- `sitemap.xml` · `robots.txt` 는 직접 만든 엔드포인트다 (`src/pages/sitemap.xml.ts` · `robots.txt.ts`). lastmod 는 카드 기준일, 404 는 noindex
+- 페이지마다 title · description · canonical · OG(홈 · 프로젝트는 website, 카드는 article + 기준일) · `twitter:card` · `lang="ko"`. 카드 description 은 사본의 '요약' 속성이고, 비어 있으면 본문 '개요'의 첫 문단을 문장 단위로 150자 안에서 자른다 (`src/lib/describe.ts`)
+- OG 이미지(1200×630 PNG — 홈 · 프로젝트 2 · 카드 12)는 빌드 때 SVG 틀에 글자를 배치해 resvg 로 굽는다 (`src/lib/og.ts`). 글꼴이 Pretendard 정적 OTF 라 CI 에서도 똑같이 그려진다
+- 홈에 Person 구조화 데이터(JSON-LD)
 - 커스텀 도메인은 나중에 선택 (CNAME 만 추가)
 
 ---
@@ -371,6 +377,12 @@ const features = defineCollection({
 - 다이어그램 · 커버 alt 필수
 - 360px 에서 페이지 가로 스크롤 없음
 - 변환기 미지원 블록 0 (나오면 동기화 실패)
+
+Lighthouse 는 PageSpeed Insights(모바일 — 느린 4G · CPU 4배 감속 모의)를 기준으로 본다. 로컬 Windows 의 Lighthouse 는 새 렌더러가 한글 대체 글꼴을 찾는 비용 때문에 레이아웃 시간이 PSI(리눅스)의 약 7배로 잡혀 TBT 가 부풀려진다 — 로컬에서는 FCP · LCP 쪽만 믿는다.
+
+성능을 위해 한 것 (M4)
+- CSS 를 페이지에 인라인으로 넣는다 — 외부 CSS 한 벌이 모바일 첫 화면을 약 1.9초 막았다. 늘어나는 양은 페이지당 gzip 약 4KB
+- 글꼴: Pretendard 동적 서브셋(조각 92개)은 긴 카드 한 장에 26조각 · 약 700KB 를 받아 모바일 FCP 가 4초대였다 → 빌드 때 사이트에 쓰인 글자만 남긴 가변 서브셋 한 벌(약 150KB) + preload. 브라우저가 기본으로 켜는 OpenType 기능만 남겨 약 14% 더 줄였다
 
 ---
 
@@ -389,6 +401,9 @@ const features = defineCollection({
 | Next.js 정적 내보내기 | 이 규모에 비해 클라이언트 JS 와 설정이 과하다 |
 | 프로필 · 스킬까지 노션에서 파싱 | 노션 배치에 의존해 깨지기 쉽다. 바뀔 일이 드문 데이터다 |
 | 치환표를 리포에 커밋 | 숨기려던 이름이 공개 리포에 그대로 남는다 |
+| `@astrojs/sitemap` | 페이지 15개에 lastmod(카드 기준일)를 넣으려면 엔드포인트를 직접 쓰는 쪽이 짧다 |
+| Satori 로 OG 이미지 | 2주 사이 0.35 → 0.63 으로 판이 빠르게 바뀌어 고정한 판이 금방 낡는다 → SVG 틀 + resvg |
+| Pretendard 동적 서브셋 | 긴 카드 한 장에 조각 26개 · 약 700KB → 모바일 FCP 4초대 (11장) |
 
 ---
 
@@ -410,6 +425,7 @@ M3 전까지 배포본에는 공개 점검을 마친 페이지만 올라간다. 
 - 2026-10-19 · M2 완료: 시안 3장 승인 → 토큰(`light-dark()`) · Pretendard 자체 호스팅 · 테마 토글 · 헤더/푸터 · 홈(대표 수치 · 스킬 · 프로젝트) · 프로젝트 카드 그리드 · 상세(고정 목차 · 모바일 접힌 목차 · 이전/다음) · 코드 접기 · 다이어그램 이름 줄바꿈 수정. 12장 전부 초안으로 동기화해 데스크톱 · 모바일 375px · 다크에서 확인. 공개 카드가 0장인 CI 조건에서도 홈 · 404 만 깨진 링크 없이 빌드됨
 - 2026-10-19 · M3 진행: 가드가 표 칸 속 API 경로 · 파일:라인을 잡게 하고 `[비공개]` 일반 제목이 절째 빠지게 함 (커밋 21c438e). 이어서 **공개 기준 개정** — 프로젝트 내부 정보는 싣지 않는다(6.5): 홈 프로젝트 소개 일반화, 카드의 API 수 · 테이블 수 비표시, 가드에 식별자 · 파일 이름 · 인스턴스 사양 규칙, 공개본은 노션 공개용 사본, 소개 문서는 올리지 않음
 - 2026-10-19 · M3 공개: 12장 전부 노션 공개용 사본으로 공개. 사본마다 공개 기준 가드 0건 · 원고와 동기화 결과의 글자 대조 0곳 · 커밋 파일과 빌드 결과의 비공개 용어 0건을 확인했다. 노션에 올리며 생긴 오타는 이 대조로 잡아 사본에서 고쳤고, 블록 끝 줄바꿈이 문단 끝 역슬래시로 찍히던 변환 결함을 고쳤다(56ba6cf). 남은 것: 사용자 검토(14장 3 · 4번)
+- 2026-10-19 · M4: OG 이미지 15장(SVG 틀 + resvg) · `sitemap.xml` · `robots.txt` · 페이지 메타(canonical · OG · `twitter:card` · 홈 JSON-LD) · 카드 요약(사본 '요약' 속성, 비면 개요 첫 문단) · 인쇄 스타일(다크에서도 라이트로, 토글 펼침, 사이트 안 링크 주소) · 다이어그램 다크 이미지 alt · 대비 보정(푸터 글자, b2b 카드 표지) · CSS 인라인 · Pretendard 사이트 서브셋(글자 895개 · 146KB 한 벌 + preload). 로컬 Lighthouse 모바일 15페이지 전부 성능 98–99 · 접근성 · 권장사항 · SEO 100, 품질 기준(11장) · 깨진 내부 링크 0 · 본문이 서브셋 밖 글꼴로 그려진 글자 0(이모지 · 인라인 코드 · 원본에도 없는 └ 제외). 남은 것: 배포 후 PageSpeed Insights 로 재확인
 
 ---
 

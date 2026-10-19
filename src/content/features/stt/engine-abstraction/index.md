@@ -9,6 +9,7 @@ evidence: ["measured"]
 draft: false
 cover: null
 notionEditedAt: "2026-08-31"
+description: null
 ---
 
 ## 개요
@@ -52,7 +53,7 @@ STT·LLM **외부 엔진을 Factory와 추상 베이스 클래스 뒤로 숨겨*
 
 ## 구조
 
-<figure class="diagram"><img src="/content-assets/stt/engine-abstraction/diagram-1.light.svg" alt="구조 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/engine-abstraction/diagram-1.dark.svg" alt="" class="diagram-dark" loading="lazy" decoding="async" aria-hidden="true"></figure>
+<figure class="diagram"><img src="/content-assets/stt/engine-abstraction/diagram-1.light.svg" alt="구조 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/engine-abstraction/diagram-1.dark.svg" alt="구조 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
 ---
 

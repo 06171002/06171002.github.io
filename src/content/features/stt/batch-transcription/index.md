@@ -9,6 +9,7 @@ evidence: ["tested"]
 draft: false
 cover: null
 notionEditedAt: "2026-08-31"
+description: null
 ---
 
 ## 개요
@@ -54,7 +55,7 @@ STT가 전부 끝나야 결과를 주면, 사용자는 그동안 진행 상황�
 
 ## 처리 흐름
 
-<figure class="diagram"><img src="/content-assets/stt/batch-transcription/diagram-1.light.svg" alt="처리 흐름 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/batch-transcription/diagram-1.dark.svg" alt="" class="diagram-dark" loading="lazy" decoding="async" aria-hidden="true"></figure>
+<figure class="diagram"><img src="/content-assets/stt/batch-transcription/diagram-1.light.svg" alt="처리 흐름 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/batch-transcription/diagram-1.dark.svg" alt="처리 흐름 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
 ---
 

@@ -23,7 +23,7 @@ const { key, items } = Astro.props as Props;
 const project = projects[key];
 ---
 
-<Base title={`${project.name} · 이상진`} description={project.summary}>
+<Base title={`${project.name} · 이상진`} description={project.summary} image={`/og/${key}.png`}>
     <main id="main" class="container project-page">
         <nav class="crumbs" aria-label="경로">
             <a href="/">홈</a> ›

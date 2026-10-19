@@ -9,6 +9,7 @@ evidence: ["measured"]
 draft: false
 cover: null
 notionEditedAt: "2026-10-19"
+description: "동시 주문 부하 테스트에서 난 교착을 InnoDB 교착 기록으로 추적해 원인을 확정하고, 경로별 교착 여섯 가지를 고친 과정. 25명 동시 주문 로컬 부하 테스트에서 교착 23건을 0건으로 줄였다."
 ---
 
 ## 먼저, S락과 X락
