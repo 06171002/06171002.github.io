@@ -31,7 +31,7 @@ export const features: FeatureEntry[] = [
     { project: 'b2b', slug: 'company-join-request', order: 7, evidence: [], publish: false },
     // 실시간 음성 전사·요약 STT 서버
     { project: 'stt', slug: 'batch-transcription', order: 1, evidence: ['tested'], publish: false },
-    { project: 'stt', slug: 'engine-abstraction', order: 2, evidence: ['measured'], publish: false },
+    { project: 'stt', slug: 'engine-abstraction', order: 2, evidence: ['measured'], publish: true },
     { project: 'stt', slug: 'async-queue-observability', order: 3, evidence: ['tested', 'measured'], publish: false },
     { project: 'stt', slug: 'room-summary', order: 4, evidence: ['tested', 'measured'], publish: false },
     { project: 'stt', slug: 'realtime-stt', order: 5, evidence: ['tested', 'measured'], publish: false },

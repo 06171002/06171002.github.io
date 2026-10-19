@@ -1,0 +1,9 @@
+flowchart TB
+    CALL["호출부<br/>(파이프라인)"] --> STTF["STT 서비스 (Factory)"]
+    CALL --> LLMF["LLM 서비스 (Provider)"]
+    STTF --> FW["Faster-Whisper"]
+    STTF --> WL["WhisperLive"]
+    STTF --> GS["Google STT"]
+    LLMF --> OL["Ollama"]
+    LLMF --> LM["LM Studio"]
+    LLMF --> GM["Gemini"]
