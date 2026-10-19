@@ -22,7 +22,7 @@ export interface FeatureEntry {
 /** 동기화 허용 목록. 여기 없는 노션 카드는 동기화하지 않는다 */
 export const features: FeatureEntry[] = [
     // 기업 간 구매·조달 플랫폼
-    { project: 'b2b', slug: 'order-deadlock', order: 1, evidence: ['measured'], publish: false },
+    { project: 'b2b', slug: 'order-deadlock', order: 1, evidence: ['measured'], publish: true },
     { project: 'b2b', slug: 'direct-trade', order: 2, evidence: ['measured'], publish: false },
     { project: 'b2b', slug: 'supplier-po-delivery', order: 3, evidence: ['tested'], publish: true },
     { project: 'b2b', slug: 'claims', order: 4, evidence: ['tested', 'measured'], publish: true },
