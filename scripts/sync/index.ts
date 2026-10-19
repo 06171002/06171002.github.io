@@ -48,6 +48,11 @@ function textProp(properties: Properties, name: string): string {
     return value?.type === 'rich_text' ? value.rich_text.map((item) => item.plain_text).join('') : '';
 }
 
+function dateProp(properties: Properties, name: string): string | null {
+    const value = properties[name];
+    return value?.type === 'date' ? (value.date?.start ?? null) : null;
+}
+
 interface Cover {
     ext: string;
     bytes: Buffer;
@@ -100,7 +105,9 @@ function featureFrontmatter(
         evidence: entry.evidence,
         draft: !entry.publish,
         cover,
-        notionEditedAt: page.last_edited_time,
+        // 공개용 사본의 '기준일'(원문 마지막 수정일)이 본문의 "현재" · "N주 전" 의 기준점이다.
+        // 사본을 만든 날이 아니라 내용이 쓰인 날이어야 하므로 속성을 먼저 보고, 없으면 노션 마지막 수정 시각
+        notionEditedAt: dateProp(properties, '기준일') ?? page.last_edited_time,
     };
 }
 

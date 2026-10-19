@@ -34,7 +34,7 @@ const toc = headings.filter((heading) => heading.depth === 2);
 const basis = new Intl.DateTimeFormat('ko-KR', { dateStyle: 'long', timeZone: 'Asia/Seoul' }).format(
     data.notionEditedAt
 );
-const meta = [data.domain, `노션 ${basis} 기준`].filter(Boolean);
+const meta = [data.domain, `${basis} 기준`].filter(Boolean);
 ---
 
 <Base title={`${data.title} · 이상진`} description={`${project.name} — ${data.title}`}>
