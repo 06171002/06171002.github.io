@@ -1,5 +1,9 @@
 ---
+import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css';
+import '../styles/tokens.css';
 import '../styles/global.css';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
 
 interface Props {
     title: string;
@@ -19,9 +23,32 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         <meta name="description" content={description} />
         <link rel="canonical" href={canonical} />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <meta property="og:type" content="website" />
+        <meta property="og:locale" content="ko_KR" />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={description} />
+        <meta property="og:url" content={canonical} />
         <meta name="generator" content={Astro.generator} />
+        <!-- 저장된 테마를 그리기 전에 적용해 첫 화면 깜빡임을 막는다 -->
+        <script is:inline>
+            try {
+                var saved = localStorage.getItem('theme');
+                if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
+            } catch (e) {}
+        </script>
     </head>
     <body>
+        <a class="skip-link" href="#main">
+            본문으로 건너뛰기
+        </a>
+        <Header />
         <slot />
+        <Footer />
+        <script>
+            // 인쇄할 때는 접힌 토글 · 코드를 모두 펼친다
+            window.addEventListener('beforeprint', () => {
+                for (const details of document.querySelectorAll('details')) details.open = true;
+            });
+        </script>
     </body>
 </html>

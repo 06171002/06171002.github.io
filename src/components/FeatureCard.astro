@@ -1,0 +1,120 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import EvidenceBadges from './EvidenceBadges.astro';
+
+interface Props {
+    entry: CollectionEntry<'features'>;
+}
+
+const { entry } = Astro.props;
+const data = entry.data;
+// 노션 커버 이미지 대신 카드 데이터로 같은 모양을 그린다 — 다크 모드에서도 어울리고, 커버 없는 카드도 같은 모양이 된다
+const stats = [
+    data.tableCount !== null ? `${data.tableCount} 테이블` : null,
+    data.apiCount !== null ? `${data.apiCount} API` : null,
+].filter(Boolean);
+---
+
+<li class={`feature-card project-${data.project}`}>
+    <a href={`/${data.project}/${entry.id}/`}>
+        <div class="feature-cover" aria-hidden="true">
+            {data.domain && <span class="feature-domain">{data.domain}</span>}
+            {stats.length > 0 ? (
+                <span class="feature-stats">{stats.join(' · ')}</span>
+            ) : (
+                <span class="feature-stats is-keyword">{data.keywords.slice(0, 2).join(' · ')}</span>
+            )}
+        </div>
+        <div class="feature-body">
+            <h3 class="feature-title">
+                {data.title}
+                {data.draft && <span class="draft-tag">초안</span>}
+            </h3>
+            <EvidenceBadges kinds={data.evidence} />
+            {data.keywords.length > 0 && <p class="feature-keywords">{data.keywords.slice(0, 3).join(' · ')}</p>}
+        </div>
+    </a>
+</li>
+
+<style>
+    .feature-card a {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        color: var(--fg);
+        text-decoration: none;
+        transition: border-color 0.15s ease;
+    }
+
+    .feature-card a:hover {
+        border-color: var(--accent);
+    }
+
+    .feature-cover {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 0.75rem;
+        min-height: 5.5rem;
+        padding: 0.875rem 1rem;
+        border-bottom: 1px solid var(--border);
+        border-left: 5px solid var(--project-color);
+        background: var(--project-bg);
+    }
+
+    .project-b2b {
+        --project-color: var(--project-b2b);
+        --project-bg: var(--project-b2b-bg);
+    }
+
+    .project-stt {
+        --project-color: var(--project-stt);
+        --project-bg: var(--project-stt-bg);
+    }
+
+    .feature-domain {
+        align-self: flex-start;
+        padding: 0 0.5rem;
+        border: 1px solid var(--project-color);
+        border-radius: 999px;
+        color: var(--project-color);
+        font-size: 0.75rem;
+        font-weight: 600;
+        line-height: 1.6;
+    }
+
+    .feature-stats {
+        color: var(--project-color);
+        font-size: 1.0625rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+    }
+
+    /* 테이블 · API 수가 없는 카드는 키워드를 수치처럼 보이지 않게 가볍게 */
+    .feature-stats.is-keyword {
+        font-size: var(--text-sm);
+        font-weight: 600;
+    }
+
+    .feature-body {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 0.875rem 1rem 1rem;
+    }
+
+    .feature-title {
+        margin: 0;
+        font-size: 1.0625rem;
+        line-height: 1.4;
+    }
+
+    .feature-keywords {
+        margin: 0;
+        color: var(--muted);
+        font-size: var(--text-xs);
+    }
+</style>

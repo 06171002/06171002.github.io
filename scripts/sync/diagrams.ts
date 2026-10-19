@@ -36,8 +36,14 @@ export async function renderDiagram(
     const { data } = await renderMermaid(browser, source, 'svg', {
         backgroundColor: 'transparent',
         svgId,
-        // HTML 라벨(foreignObject)은 <img> 로 띄울 때 브라우저마다 다르게 보이므로 순수 SVG 텍스트로 그린다
-        mermaidConfig: { theme, fontFamily: FONT_FAMILY, htmlLabels: false, flowchart: { htmlLabels: false } },
+        // HTML 라벨(foreignObject)은 <img> 로 띄울 때 브라우저마다 다르게 보이므로 순수 SVG 텍스트로 그린다.
+        // wrappingWidth 는 ER 다이어그램 이름에도 적용된다 — 기본 200px 이면 PURCHASE_ORDER 가 글자 중간에서 잘린다
+        mermaidConfig: {
+            theme,
+            fontFamily: FONT_FAMILY,
+            htmlLabels: false,
+            flowchart: { htmlLabels: false, wrappingWidth: 400 },
+        },
     });
     return new TextDecoder().decode(data);
 }

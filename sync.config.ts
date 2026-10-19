@@ -7,7 +7,9 @@ export type Evidence = 'measured' | 'tested' | 'static' | 'estimated';
 export interface FeatureEntry {
     project: Project;
     slug: string;
+    /** 프로젝트 안 순서 — 기본은 노션 보기 순서 */
     order: number;
+    /** 카드에 붙일 근거 배지. 본문의 표기(실측 · N/N 통과 · 추정)를 보고 정한다 */
     evidence: Evidence[];
     /**
      * 공개 점검을 마쳤는가.
@@ -19,7 +21,18 @@ export interface FeatureEntry {
 
 /** 동기화 허용 목록. 여기 없는 노션 카드는 동기화하지 않는다 */
 export const features: FeatureEntry[] = [
-    // M1 파일럿: 표준 틀 카드 1장 + 예외 블록(토글 · 열 · 셀 색)이 많은 카드 1장
+    // 기업 간 구매·조달 플랫폼
+    { project: 'b2b', slug: 'order-deadlock', order: 1, evidence: ['measured'], publish: false },
+    { project: 'b2b', slug: 'direct-trade', order: 2, evidence: ['measured'], publish: false },
+    { project: 'b2b', slug: 'supplier-po-delivery', order: 3, evidence: ['tested'], publish: false },
     { project: 'b2b', slug: 'claims', order: 4, evidence: ['tested', 'measured'], publish: false },
+    { project: 'b2b', slug: 'order-payment', order: 5, evidence: ['measured', 'tested'], publish: false },
+    { project: 'b2b', slug: 'cart', order: 6, evidence: ['measured', 'tested'], publish: false },
     { project: 'b2b', slug: 'company-join-request', order: 7, evidence: [], publish: false },
+    // 실시간 음성 전사·요약 STT 서버
+    { project: 'stt', slug: 'batch-transcription', order: 1, evidence: ['tested'], publish: false },
+    { project: 'stt', slug: 'engine-abstraction', order: 2, evidence: ['measured'], publish: false },
+    { project: 'stt', slug: 'async-queue-observability', order: 3, evidence: ['tested', 'measured'], publish: false },
+    { project: 'stt', slug: 'room-summary', order: 4, evidence: ['tested', 'measured'], publish: false },
+    { project: 'stt', slug: 'realtime-stt', order: 5, evidence: ['tested', 'measured'], publish: false },
 ];

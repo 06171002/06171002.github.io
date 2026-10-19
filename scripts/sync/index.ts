@@ -6,6 +6,7 @@
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import type { PageObjectResponse } from '@notionhq/client';
+import type { Browser } from 'puppeteer';
 import { features } from '../../sync.config.ts';
 import type { FeatureEntry } from '../../sync.config.ts';
 import { convertPage } from './convert.ts';
@@ -19,6 +20,7 @@ import { createRedactor } from './redact.ts';
 import type { Redactor } from './redact.ts';
 
 type Properties = PageObjectResponse['properties'];
+type Outcome = 'written' | 'checked' | 'blocked';
 
 const args = process.argv.slice(2);
 const strictCheck = args.includes('--check');
@@ -144,80 +146,94 @@ async function main(): Promise<void> {
     }
     const resolvePage = (pageId: string) => pathByPageId.get(normalizeId(pageId)) ?? null;
 
+    async function syncOne(entry: FeatureEntry, browser: Browser | null): Promise<Outcome> {
+        // 공개 카드이거나 --check 면 가드에 걸릴 때 차단한다
+        const strict = entry.publish || strictCheck;
+        const pageId = config.notion.features[entry.slug];
+        if (!pageId) throw new Error(`sync.local.json 에 ${entry.slug} 의 노션 페이지 ID 가 없습니다`);
+
+        const started = Date.now();
+        const page = await fetchPage(notion, pageId);
+        const blocks = await fetchBlockTree(notion, pageId);
+        const dirs = outputDirs(entry, entry.publish);
+        const result = convertPage(blocks, { redact, resolvePage, assetsBase: dirs.assetsUrl });
+        const cover = await downloadCover(page);
+        const coverUrl = cover ? `${dirs.assetsUrl}/cover.${cover.ext}` : null;
+        const markdown = frontmatter(featureFrontmatter(entry, page, redact, coverUrl)) + serialize(result.root);
+
+        const hits = [
+            ...scan(markdown, denylist),
+            ...result.diagrams.flatMap((diagram) => scan(diagram.source, denylist)),
+            ...(cover?.text ? scan(cover.text, denylist).map((hit) => ({ ...hit, rule: `커버 SVG ${hit.rule}` })) : []),
+        ];
+        const seconds = ((Date.now() - started) / 1000).toFixed(1);
+        console.log(`    블록 변환 ${seconds}초 · 다이어그램 ${result.diagrams.length}개`);
+        for (const item of result.excluded) console.log(`    [비공개] 제외: ${item}`);
+        if (cover && !cover.text) {
+            console.log(`    ⚠ 커버가 ${cover.ext} 이미지라 글자 검사를 못 합니다 — 눈으로 확인하세요`);
+        }
+
+        if (hits.length > 0) {
+            const prefix = strict ? '    ✗ 가드 차단' : '    ⚠ 가드 경고(초안이라 쓰기는 진행)';
+            for (const line of summarize(hits)) console.log(`${prefix} — ${line}`);
+            if (strict) return 'blocked';
+        } else if (strictCheck) {
+            // 가드는 문자열 패턴만 본다. 회사 코드 발췌 · 결함 서술 같은 내용 항목은 공개 점검 목록으로 따로 확인한다
+            console.log('    ✓ 가드 통과 — 남은 건 공개 점검 목록의 내용 항목(회사 코드 · 결함 서술 등) 확인');
+        }
+        if (dryRun || !browser) return 'checked';
+
+        // 공개 ↔ 초안을 오가도 옛 산출물이 남지 않게 두 위치를 모두 지운다
+        for (const dir of [outputDirs(entry, true), outputDirs(entry, false)]) {
+            rmSync(dir.content, { recursive: true, force: true });
+            rmSync(dir.assets, { recursive: true, force: true });
+        }
+        mkdirSync(dirs.content, { recursive: true });
+        writeFileSync(path.join(dirs.content, 'index.md'), markdown, 'utf8');
+        if (result.diagrams.length > 0 || cover) mkdirSync(dirs.assets, { recursive: true });
+        for (const diagram of result.diagrams) {
+            // 원문은 콘텐츠 폴더에 둔다 — 커밋되어 diff 로 그림 변경을 읽을 수 있고, 배포(public)에는 나가지 않는다
+            writeFileSync(path.join(dirs.content, `${diagram.name}.mmd`), diagram.source, 'utf8');
+            for (const theme of ['default', 'dark'] as const) {
+                const svg = await renderDiagram(
+                    browser,
+                    diagram.source,
+                    theme,
+                    `${entry.slug}-${diagram.name}-${theme}`
+                );
+                const file = `${diagram.name}.${theme === 'dark' ? 'dark' : 'light'}.svg`;
+                writeFileSync(path.join(dirs.assets, file), svg, 'utf8');
+            }
+        }
+        if (cover) writeFileSync(path.join(dirs.assets, `cover.${cover.ext}`), cover.bytes);
+        console.log(`    → ${path.relative(repoRoot, path.join(dirs.content, 'index.md'))}`);
+        return 'written';
+    }
+
     const mode = strictCheck ? ' (공개 기준 점검: 파일을 쓰지 않음)' : dryRun ? ' (dry-run: 파일을 쓰지 않음)' : '';
     console.log(`노션 동기화${mode} — ${targets.length}장\n`);
     const browser = dryRun ? null : await openBrowser();
     let blocked = 0;
+    let failed = 0;
     try {
         for (const entry of targets) {
-            // 공개 카드이거나 --check 면 가드에 걸릴 때 차단한다
-            const strict = entry.publish || strictCheck;
-            const label = `${entry.project}/${entry.slug} ${entry.publish ? '[공개]' : '[초안]'}`;
-            const pageId = config.notion.features[entry.slug];
-            if (!pageId) throw new Error(`sync.local.json 에 ${entry.slug} 의 노션 페이지 ID 가 없습니다`);
-
-            const started = Date.now();
-            const page = await fetchPage(notion, pageId);
-            const blocks = await fetchBlockTree(notion, pageId);
-            const dirs = outputDirs(entry, entry.publish);
-            const result = convertPage(blocks, { redact, resolvePage, assetsBase: dirs.assetsUrl });
-            const cover = await downloadCover(page);
-            const coverUrl = cover ? `${dirs.assetsUrl}/cover.${cover.ext}` : null;
-            const markdown = frontmatter(featureFrontmatter(entry, page, redact, coverUrl)) + serialize(result.root);
-
-            const hits = [
-                ...scan(markdown, denylist),
-                ...result.diagrams.flatMap((diagram) => scan(diagram.source, denylist)),
-                ...(cover?.text
-                    ? scan(cover.text, denylist).map((hit) => ({ ...hit, rule: `커버 SVG ${hit.rule}` }))
-                    : []),
-            ];
-            const seconds = ((Date.now() - started) / 1000).toFixed(1);
-            console.log(`• ${label} — 블록 변환 ${seconds}초, 다이어그램 ${result.diagrams.length}개`);
-            for (const item of result.excluded) console.log(`    🔒 제외: ${item}`);
-            if (cover && !cover.text)
-                console.log(`    ⚠ 커버가 ${cover.ext} 이미지라 글자 검사를 못 합니다 — 눈으로 확인하세요`);
-
-            if (hits.length > 0) {
-                const prefix = strict ? '    ✗ 가드 차단' : '    ⚠ 가드 경고(초안이라 쓰기는 진행)';
-                for (const line of summarize(hits)) console.log(`${prefix} — ${line}`);
-                if (strict) {
-                    blocked += 1;
-                    continue;
-                }
-            } else if (strictCheck) {
-                // 가드는 문자열 패턴만 본다. 회사 코드 발췌 · 결함 서술 같은 내용 항목은 공개 점검 목록으로 따로 확인한다
-                console.log('    ✓ 가드 통과 — 남은 건 공개 점검 목록의 내용 항목(회사 코드 · 결함 서술 등) 확인');
+            console.log(`• ${entry.project}/${entry.slug} ${entry.publish ? '[공개]' : '[초안]'}`);
+            try {
+                if ((await syncOne(entry, browser)) === 'blocked') blocked += 1;
+            } catch (error) {
+                // 한 장이 실패해도 나머지는 계속한다
+                failed += 1;
+                console.log(`    ✗ 실패 — ${error instanceof Error ? error.message : String(error)}`);
             }
-            if (dryRun || !browser) continue;
-
-            // 공개 ↔ 초안을 오가도 옛 산출물이 남지 않게 두 위치를 모두 지운다
-            for (const dir of [outputDirs(entry, true), outputDirs(entry, false)]) {
-                rmSync(dir.content, { recursive: true, force: true });
-                rmSync(dir.assets, { recursive: true, force: true });
-            }
-            mkdirSync(dirs.content, { recursive: true });
-            writeFileSync(path.join(dirs.content, 'index.md'), markdown, 'utf8');
-            if (result.diagrams.length > 0 || cover) mkdirSync(dirs.assets, { recursive: true });
-            for (const diagram of result.diagrams) {
-                for (const theme of ['default', 'dark'] as const) {
-                    const svg = await renderDiagram(
-                        browser,
-                        diagram.source,
-                        theme,
-                        `${entry.slug}-${diagram.name}-${theme}`
-                    );
-                    const file = `${diagram.name}.${theme === 'dark' ? 'dark' : 'light'}.svg`;
-                    writeFileSync(path.join(dirs.assets, file), svg, 'utf8');
-                }
-            }
-            if (cover) writeFileSync(path.join(dirs.assets, `cover.${cover.ext}`), cover.bytes);
-            console.log(`    → ${path.relative(repoRoot, path.join(dirs.content, 'index.md'))}`);
         }
     } finally {
         await browser?.close();
     }
 
+    if (failed > 0) {
+        console.error(`\n${failed}장이 실패했습니다. 위의 실패 사유를 확인하세요`);
+        process.exit(1);
+    }
     if (blocked > 0) {
         console.error(`\n${blocked}장이 가드에 막혔습니다. 노션 원문을 고치거나 치환표에 추가한 뒤 다시 실행하세요`);
         process.exit(2);

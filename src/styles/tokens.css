@@ -1,0 +1,69 @@
+/*
+ * 디자인 토큰 (docs/design.md 8장)
+ * 라이트 · 다크는 light-dark() 한 줄로 정의한다. 기본은 시스템 설정을 따르고,
+ * 테마 토글이 <html data-theme="light|dark"> 를 붙이면 그쪽으로 고정된다.
+ * 글자색 · 배지 · 콜아웃 색은 바탕 대비 4.5:1 이상으로 맞췄다
+ */
+:root {
+    color-scheme: light dark;
+}
+
+:root[data-theme='light'] {
+    color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+    color-scheme: dark;
+}
+
+:root {
+    /* 바탕 · 글자 · 선 */
+    --bg: light-dark(#ffffff, #0f1115);
+    --surface: light-dark(#f6f7f9, #171a1f);
+    --surface-strong: light-dark(#eef0f3, #1f232a);
+    --fg: light-dark(#17191d, #e8eaed);
+    --muted: light-dark(#5b6270, #9aa1ac);
+    --subtle: light-dark(#7a818c, #7c838e);
+    --border: light-dark(#e4e7ec, #262a31);
+    --border-strong: light-dark(#d0d5dc, #353a42);
+    --accent: light-dark(#2457d6, #8aabff);
+    --accent-weak: light-dark(#edf2fd, #172036);
+
+    /* 근거 배지: 실측 · 테스트 · 정적 분석 · 추정 */
+    --ev-measured: light-dark(#1f4fbf, #93b4ff);
+    --ev-measured-bg: light-dark(#ecf2fe, #18233b);
+    --ev-tested: light-dark(#23704a, #7fd0a0);
+    --ev-tested-bg: light-dark(#e8f5ee, #142a1e);
+    --ev-static: light-dark(#6b45a0, #c3a6ec);
+    --ev-static-bg: light-dark(#f2edf9, #241b33);
+    --ev-estimated: light-dark(#8a5a00, #e9c46a);
+    --ev-estimated-bg: light-dark(#fbf3df, #2c2513);
+
+    /* 프로젝트 색 (카드 띠) */
+    --project-b2b: light-dark(#4f7f25, #8fc46a);
+    --project-b2b-bg: light-dark(#f1f6ea, #18220f);
+    --project-stt: light-dark(#6047b8, #a993ec);
+    --project-stt-bg: light-dark(#f2effb, #1f1a33);
+
+    /* 글꼴 · 크기 */
+    --font-sans:
+        'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, 'Apple SD Gothic Neo',
+        'Malgun Gothic', sans-serif;
+    /* font-family 를 monospace 하나로만 두면 브라우저가 13px 기준으로 줄인다 → 목록으로 지정 */
+    --font-mono: ui-monospace, 'Cascadia Code', SFMono-Regular, Menlo, Consolas, 'D2Coding', monospace;
+    --text-sm: 0.875rem;
+    --text-xs: 0.8125rem;
+
+    /* 폭 · 간격 · 모서리 */
+    --page-width: 72rem;
+    --read-width: 46rem;
+    --gutter: 1rem;
+    --radius: 8px;
+    --radius-lg: 12px;
+}
+
+@media (min-width: 640px) {
+    :root {
+        --gutter: 1.5rem;
+    }
+}

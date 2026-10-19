@@ -1,6 +1,6 @@
 import type { RichTextItemResponse } from '@notionhq/client';
 import type { BlockContent, Html, List, ListItem, Paragraph, PhrasingContent, Root, Table, TableRow } from 'mdast';
-import { escapeAttr, phrasingToHtml } from './html.ts';
+import { escapeAttr, escapeHtml, phrasingToHtml } from './html.ts';
 import type { BlockNode } from './notion.ts';
 import { dropPrefix, plainText, segmentsOf, splitLines, toPhrasing } from './richtext.ts';
 import type { RichTextContext, Segment } from './richtext.ts';
@@ -283,13 +283,33 @@ function callout(block: BlockNode, state: State): BlockContent[] {
 }
 
 const LANGUAGE: Record<string, string> = { 'plain text': 'text', shell: 'sh', 'c++': 'cpp', 'c#': 'csharp' };
+const LANGUAGE_LABEL: Record<string, string> = {
+    text: '텍스트',
+    sql: 'SQL',
+    java: 'Java',
+    python: 'Python',
+    javascript: 'JavaScript',
+    typescript: 'TypeScript',
+    sh: 'Shell',
+    bash: 'Shell',
+    json: 'JSON',
+    yaml: 'YAML',
+    xml: 'XML',
+};
+/** 이보다 긴 코드 블록은 접어 둔다 (docs/design.md 5.3) — InnoDB 덤프 · 타임라인이 길다 */
+const FOLD_LINES = 25;
 
 function code(block: BlockNode, state: State): BlockContent[] {
     if (block.type !== 'code') return [];
     const source = state.options.redact(block.code.rich_text.map((item) => item.plain_text).join(''));
     const language = block.code.language;
     if (language !== 'mermaid') {
-        return [{ type: 'code', lang: LANGUAGE[language] ?? language, value: source }];
+        const lang = LANGUAGE[language] ?? language;
+        const node: BlockContent = { type: 'code', lang, value: source };
+        const lines = source.split('\n').length;
+        if (lines <= FOLD_LINES) return [node];
+        const label = `${LANGUAGE_LABEL[lang] ?? lang} · ${lines}줄`;
+        return [html(`<details class="code-fold">\n<summary>${escapeHtml(label)}</summary>`), node, html('</details>')];
     }
     const name = `diagram-${state.diagrams.length + 1}`;
     const caption = state.options.redact(block.code.caption.map((item) => item.plain_text).join('')).trim();

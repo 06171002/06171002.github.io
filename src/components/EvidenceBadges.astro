@@ -1,0 +1,23 @@
+---
+import type { Evidence } from '../../sync.config';
+import { evidenceLabel } from '../data/projects';
+
+interface Props {
+    kinds: readonly Evidence[];
+    /** 실측 환경 (로컬 / 배포 환경) — 실측 배지에만 붙는다 */
+    env?: string | undefined;
+}
+
+const { kinds, env } = Astro.props;
+---
+
+{kinds.length > 0 && (
+    <ul class="badge-list" aria-label="근거">
+        {kinds.map((kind) => (
+            <li class={`badge badge-${kind}`}>
+                {evidenceLabel[kind]}
+                {kind === 'measured' && env ? ` · ${env}` : ''}
+            </li>
+        ))}
+    </ul>
+)}

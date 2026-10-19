@@ -1,0 +1,33 @@
+---
+import { getCollection } from 'astro:content';
+import { profile } from '../data/profile';
+import { projectKeys, projects } from '../data/projects';
+import ThemeToggle from './ThemeToggle.astro';
+
+// 카드가 있는 프로젝트만 메뉴에 둔다 — 공개 카드가 없으면 프로젝트 페이지 자체가 없다
+const entries = await getCollection('features');
+const available = projectKeys.filter((key) => entries.some((entry) => entry.data.project === key));
+const path = Astro.url.pathname;
+---
+
+<header class="site-header">
+    <div class="container header-inner">
+        <a class="site-name" href="/">
+            {profile.name}
+        </a>
+        {available.length > 0 && (
+            <nav class="site-nav" aria-label="프로젝트">
+                <ul>
+                    {available.map((key) => (
+                        <li>
+                            <a href={`/${key}/`} aria-current={path.startsWith(`/${key}/`) ? 'page' : undefined}>
+                                {projects[key].short}
+                            </a>
+                        </li>
+                    ))}
+                </ul>
+            </nav>
+        )}
+        <ThemeToggle />
+    </div>
+</header>
