@@ -43,6 +43,7 @@ interface State {
 const SKIPPED = new Set(['table_of_contents', 'breadcrumb']);
 /**
  * 사이트에서 뺄 블록 표식: 토글 · 제목 · 콜아웃 글이 [비공개] 로 시작 (docs/design.md 6.5).
+ * 토글 · 토글 제목 · 콜아웃은 자식째, 일반 제목은 같은 단계 이상의 다음 제목 전까지 절을 통째로 뺀다.
  * 🔒 같은 아이콘은 쓰지 않는다 — 잠금 · 암호화를 다루는 카드가 내용 아이콘으로 이미 쓴다
  */
 const PRIVATE_MARKER = /^\s*\[(?:비공개|private)\]/i;
@@ -97,6 +98,31 @@ function exclude(state: State, kind: string, text: string): BlockContent[] {
     return [];
 }
 
+type HeadingData = { rich_text: RichTextItemResponse[]; is_toggleable?: boolean };
+
+function headingData(block: BlockNode): HeadingData | undefined {
+    return (block as unknown as Record<string, HeadingData | undefined>)[block.type];
+}
+
+/** [비공개] 로 시작하는 일반 제목이 여는 절 — 노션 일반 제목은 자식이 없어 제목만 빼면 본문이 남는다 */
+interface PrivateSection {
+    level: number;
+    text: string;
+    blocks: number;
+}
+
+function privateSection(block: BlockNode, level: number, state: State): PrivateSection | null {
+    const data = headingData(block);
+    // 토글 제목은 본문이 자식이라 heading() 에서 자식째 빠진다
+    if (!data || data.is_toggleable) return null;
+    const text = plainText(segmentsOf(data.rich_text, state.options));
+    return PRIVATE_MARKER.test(text) ? { level, text, blocks: 0 } : null;
+}
+
+function reportSection(state: State, section: PrivateSection): void {
+    state.excluded.push(`heading_${section.level} 절 '${clip(section.text)}' (딸린 블록 ${section.blocks}개)`);
+}
+
 function paragraphOf(items: RichTextItemResponse[], state: State): Paragraph[] {
     const children = toPhrasing(segmentsOf(items, state.options));
     return children.length > 0 ? [{ type: 'paragraph', children }] : [];
@@ -110,7 +136,23 @@ function details(label: PhrasingContent[], children: BlockContent[], className?:
 function convertBlocks(blocks: BlockNode[], state: State): BlockContent[] {
     const out: BlockContent[] = [];
     let list: List | null = null;
+    let skip: PrivateSection | null = null;
     for (const block of blocks) {
+        const level = headingLevel(block.type);
+        if (skip && (level === null || level > skip.level)) {
+            skip.blocks += 1;
+            continue;
+        }
+        if (skip) {
+            reportSection(state, skip);
+            skip = null;
+        }
+        const section = level !== null ? privateSection(block, level, state) : null;
+        if (section) {
+            skip = section;
+            list = null;
+            continue;
+        }
         if (block.type === 'bulleted_list_item' || block.type === 'numbered_list_item' || block.type === 'to_do') {
             const ordered = block.type === 'numbered_list_item';
             if (!list || list.ordered !== ordered) {
@@ -123,6 +165,7 @@ function convertBlocks(blocks: BlockNode[], state: State): BlockContent[] {
         list = null;
         out.push(...convertBlock(block, state));
     }
+    if (skip) reportSection(state, skip);
     return out;
 }
 
@@ -197,9 +240,7 @@ function convertBlock(block: BlockNode, state: State): BlockContent[] {
 
 function heading(block: BlockNode, level: number, state: State): BlockContent[] {
     // heading_1~3 은 타입이 있고, heading_4 같은 새 단계도 같은 모양이라고 보고 처리한다
-    const data = (block as unknown as Record<string, { rich_text: RichTextItemResponse[]; is_toggleable?: boolean }>)[
-        block.type
-    ];
+    const data = headingData(block);
     if (!data) {
         state.unsupported.add(block.type);
         return [];

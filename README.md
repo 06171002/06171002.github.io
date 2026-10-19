@@ -25,7 +25,7 @@
 | `pnpm sync --check` | 공개 기준으로 가드를 돌려 본다 (`publish: true` 로 바꾸기 전) |
 
 - 카드마다 `publish` 플래그가 있다. `false`(초안)는 커밋되지 않는 `src/content/drafts/` 에만 쓰고 로컬에서만 보인다. `true`(공개)만 커밋 대상이다
-- 노션에서 토글 · 콜아웃 · 토글 제목을 `[비공개]` 로 시작하면 사이트에서 빠진다
+- 노션에서 토글 · 콜아웃 · 토글 제목을 `[비공개]` 로 시작하면 사이트에서 빠진다. 일반 제목에 붙이면 같은 단계 이상의 다음 제목 전까지 그 절이 통째로 빠진다
 - Mermaid 렌더에는 이 PC 의 Chrome · Edge 를 쓴다. 다른 PC 면 `PUPPETEER_EXECUTABLE_PATH` 로 지정한다
 - Windows PowerShell 이 `pnpm.ps1` 실행을 막으면 `pnpm.cmd sync` 처럼 `.cmd` 로 실행한다
 

@@ -13,6 +13,11 @@ export const publicPatterns: GuardPattern[] = [
         name: '호스트:포트',
         regex: /\b(?:localhost|redis|mysql|mariadb|postgres|kafka|rabbitmq|minio|mongo(?:db)?|[a-z0-9-]+\.(?:internal|local|corp|lan)):\d{2,5}\b/gi,
     },
-    { name: 'HTTP 메서드 + 경로', regex: /\b(?:GET|POST|PUT|PATCH|DELETE)\s+\/[\w/{}:.-]+/g },
+    {
+        // `POST /경로` 처럼 붙은 형태, 그리고 API 목록 표처럼 메서드와 칸이 갈려 경로만 남은 형태
+        name: 'API 경로',
+        regex: /\b(?:GET|POST|PUT|PATCH|DELETE)\s+\/[\w/{}:.-]+|(?<![\w.:/])\/(?:api|ws|public)(?:\/[\w{}:.-]+)+/g,
+    },
+    { name: '파일:라인 참조', regex: /\b[\w.-]+\.(?:py|java|kt|ts|tsx|js|mjs|sql|xml|ya?ml|json|txt):\d+\b/g },
     { name: '노션 링크', regex: /notion\.(?:so|site|com)\//gi },
 ];
