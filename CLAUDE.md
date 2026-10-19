@@ -6,8 +6,9 @@
 
 - **공개 리포다.** 비공개 자료(노션 토큰, 노션 ID 매핑, 치환표, 공개 전 점검 목록)는 리포 밖 `../portfolio-private/` (`C:\dev\portfolio-private\`)에만 둔다. `.gitignore` 는 2차 안전장치일 뿐이다
 - 회사 고유명사 · 내부 식별자 · 보안 상세 · 회사 코드 원문은 공개 전에 일반화하거나 뺀다 (design.md 6.5). 이 리포의 어떤 파일에도 숨길 고유명사를 적지 않는다
-- **콘텐츠 원본은 노션이다.** M1 이후 `src/content/` 의 Markdown 은 `pnpm sync` 결과물이다. 손으로 고치지 말고 노션을 고친 뒤 다시 동기화한다
-- 노션 토큰은 사용자가 직접 넣는다. 토큰 값을 읽거나 출력하거나 옮기지 않는다
+- **콘텐츠 원본은 노션이다.** `src/content/` 의 Markdown 은 `pnpm sync` 결과물이다. 손으로 고치지 말고 노션을 고친 뒤 다시 동기화한다
+- **공개 점검 전 카드는 커밋하지 않는다.** `sync.config.ts` 의 `publish: false` 카드는 gitignore 된 `src/content/drafts/` · `public/content-assets/drafts/` 에만 쓰인다. `publish: true` 로 바꾸기 전에 `pnpm sync --check` 와 비공개 점검 목록을 확인한다 (design.md 6.7)
+- 노션 토큰은 사용자가 직접 넣는다. 스크립트가 API 호출에만 읽고, 토큰 값을 화면에 출력하거나 다른 곳으로 옮기지 않는다
 - 커밋 · push 는 사용자가 요청할 때만 한다
 
 ## 명령어
@@ -15,6 +16,14 @@
 - `pnpm dev` — 개발 서버 (4321)
 - `pnpm build` — `astro check` + `astro build`
 - `pnpm preview` — 빌드 결과 미리보기
+- `pnpm sync [slug …] [--dry-run | --check]` — 노션 동기화 (README 참고)
+- 앱 터미널(PowerShell)에서는 실행 정책 때문에 `pnpm.cmd dev` 처럼 `.cmd` 로 실행한다. 실행 정책은 바꾸지 않는다
+
+## 동기화 규칙 (scripts/sync)
+
+- 콜아웃 · 토글 · 열 · 표 래퍼 · 다이어그램은 원시 HTML 블록으로 쓴다. Astro 7 기본 Markdown 처리기(Sätteri)는 remark 플러그인을 돌리지 않는다 — remark 플러그인 · 지시문(`:::`)을 추가하지 말 것
+- 노션에서 빼고 싶은 블록 표식은 글머리 `[비공개]`. 🔒 아이콘은 내용 아이콘으로 쓰이므로 표식이 아니다
+- 처리하지 못하는 노션 블록 타입이 나오면 동기화가 실패한다. 조용히 빠뜨리게 바꾸지 말고 변환을 추가한다
 
 ## 환경
 

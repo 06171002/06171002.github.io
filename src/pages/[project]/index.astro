@@ -1,0 +1,46 @@
+---
+import type { InferGetStaticPropsType } from 'astro';
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { projectKeys, projects } from '../../data/projects';
+import '../../styles/content.css';
+
+// 카드가 하나도 없는 프로젝트는 페이지를 만들지 않는다 (CI 에는 초안이 없으므로 공개 카드가 생길 때 나타난다)
+export async function getStaticPaths() {
+    const entries = await getCollection('features');
+    return projectKeys
+        .map((key) => ({
+            key,
+            items: entries.filter((entry) => entry.data.project === key).sort((a, b) => a.data.order - b.data.order),
+        }))
+        .filter(({ items }) => items.length > 0)
+        .map(({ key, items }) => ({ params: { project: key }, props: { key, items } }));
+}
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { key, items } = Astro.props as Props;
+const project = projects[key];
+---
+
+<Base title={`${project.name} · 이상진`} description={`${project.name} — 담당 기능 ${items.length}개`}>
+    <main class="article">
+        <nav class="crumbs" aria-label="경로">
+            <a href="/">홈</a>
+        </nav>
+        <h1>{project.name}</h1>
+        <ul class="feature-list">
+            {items.map((item) => (
+                <li>
+                    <a href={`/${key}/${item.id}/`}>{item.data.title}</a>
+                    {item.data.draft && <span class="draft-tag">초안</span>}
+                    <p class="meta">
+                        {[item.data.domain, item.data.apiCount !== null ? `API ${item.data.apiCount}개` : null]
+                            .filter(Boolean)
+                            .join(' · ')}
+                    </p>
+                </li>
+            ))}
+        </ul>
+    </main>
+</Base>

@@ -46,3 +46,11 @@ a {
     color: var(--accent);
     text-underline-offset: 0.2em;
 }
+
+/* font-family 를 monospace 하나로만 두면 브라우저가 글자를 13px 기준으로 줄인다 → 목록으로 지정 */
+code,
+kbd,
+pre,
+samp {
+    font-family: ui-monospace, 'Cascadia Code', SFMono-Regular, Menlo, Consolas, 'D2Coding', monospace;
+}

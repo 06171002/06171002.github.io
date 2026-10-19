@@ -152,13 +152,13 @@ slug 는 영문 kebab-case 로 고정한다. 노션 제목이 바뀌어도 주�
   ▼
 scripts/sync/
   1. fetch     공식 API(@notionhq/client)로 허용 목록의 페이지 블록 트리 · 속성 · 커버 조회
-  2. exclude   🔒 표시 블록을 자식째 제거하고 목록 출력
+  2. exclude   [비공개] 로 시작하는 블록을 자식째 제거하고 목록 출력
   3. redact    로컬 치환표 적용 (텍스트 · Mermaid 원문)
   4. convert   블록 → mdast → Markdown
   5. diagrams  Mermaid → SVG (라이트/다크 2벌)
   6. assets    커버 내려받기 (서명 URL 이 곧 만료되므로 즉시)
-  7. guard     금지어 · 공개 패턴 검사 → 하나라도 걸리면 아무것도 쓰지 않고 위치 출력
-  8. write     src/content/{features,docs}/{project}/{slug}/index.md + SVG · 커버
+  7. guard     금지어 · 공개 패턴 검사 → 공개 카드는 걸리면 쓰지 않음, 초안은 경고만 (6.7)
+  8. write     공개: src/content/features/… · 초안: src/content/drafts/features/… (+ public/content-assets/ 의 SVG · 커버)
   │
   ▼
 git diff 로 변경분 검토 → 커밋 → push
@@ -174,29 +174,30 @@ GitHub Actions: 2차 가드(시크릿 금지어) → astro check → astro build
 - **배포가 노션 API 상태에 묶이지 않는다**
 
 ### 6.2 변환 방식: 문자열 이어붙이기 대신 AST
-노션 블록 JSON 을 mdast(Markdown 문법 트리)로 바꾼 뒤, `mdast-util-to-markdown`(+ GFM · directive 확장)으로 직렬화한다.
+노션 블록 JSON 을 mdast(Markdown 문법 트리)로 바꾼 뒤, `mdast-util-to-markdown`(+ GFM 확장)으로 직렬화한다.
 - 이스케이프와 인접 서식 문제(`**a****b**` 처럼 강조가 깨지는 경우)를 직렬화기가 처리한다. 수십 곳에서 실제로 생기는 문제다
 - 콜아웃 안의 열 안의 목록, 토글 안의 표 같은 중첩 블록을 트리 그대로 옮긴다
 - 서식이 같은 텍스트 조각이 연달아 오면 합친 뒤 노드로 만든다
-- 콜아웃 · 열 · 토글은 MDX 컴포넌트 대신 `remark-directive` 컨테이너(`:::callout{tone="red" icon="🧪"}`)로 쓴다. 자동 생성 본문에 섞인 `{` `<` 때문에 MDX 파싱이 깨지는 문제를 피하고 diff 도 읽기 쉽다
+- 콜아웃 · 토글 · 열 · 표 래퍼 · 다이어그램은 **원시 HTML 블록**으로 쓴다: `<aside class="callout tone-red" data-icon="🧪">` + 빈 줄 + Markdown 본문 + 빈 줄 + `</aside>`. CommonMark 표준이라 Astro 7 기본 Markdown 처리기(Sätteri)에서 플러그인 없이 동작한다. MDX 를 쓰지 않으므로 자동 생성 본문의 `{` `<` 이스케이프 문제도 없다
+- 강조 기호 안쪽 끝이 구두점이면(`**"따옴표"**로`) CommonMark 강조가 깨지므로 그 경우만 `<strong>` 같은 HTML 태그로 쓴다
 
 ### 6.3 블록 매핑
 
 | 노션 블록 | 사용처 | 사이트 출력 |
 |---|---|---|
 | 제목 H1~H4 | 전체 | 페이지마다 가장 높은 단계를 H2 로 맞춰 일괄 이동. 본문이 "1번", "§5" 로 참조하므로 번호는 유지 |
-| 콜아웃 (7색) | 12장 · 242개 | `:::callout` → `<aside>`. 색은 톤으로 보존. 첫 줄이 "이 검증이 말하지 않는 것"이면 `limits`, "시나리오"로 시작하면 `scenario` 톤 |
+| 콜아웃 (7색) | 12장 · 242개 | `<aside class="callout tone-…" data-icon>` HTML 블록. 색은 톤으로 보존. 첫 줄이 "이 검증이 말하지 않는 것"이면 `limits`, "시나리오"로 시작하면 `scenario`, 아이콘이 🧪 이면 `evidence` 톤 |
 | 콜아웃 본문의 `•` · `- ` 줄 | 다수 | 진짜 목록으로 정규화 |
-| 표 | 12장 · 114개 | GFM 표 + 가로 스크롤 래퍼. 행 머리글 표는 `:::table{.row-header}`, ✅ 셀은 행 강조 표시. 열 너비 · 셀 색은 버림 |
-| 코드 | 11장 · 60개 | Shiki 라이트/다크. `plain text` → `text`. 25줄 초과는 접기 |
+| 표 | 12장 · 114개 | GFM 표를 `<div class="table-wrap">` 로 감싸 표 안에서만 가로 스크롤. 행 머리글 표는 `row-header` 클래스, ✅ 는 `chosen-mark` 로 감싸 `tr:has()` 로 행 강조. 열 너비 · 셀 색은 버림 |
+| 코드 | 11장 · 60개 | Shiki 라이트/다크. `plain text` → `text`. 25줄 초과는 접기 (M2) |
 | Mermaid | 9장 · 20개 | 동기화 때 SVG 로 렌더 (6.4) |
 | 인용 | 10장 | `>` |
 | 목록 | 4장 | 그대로 |
-| 토글 · 토글 제목 | 1장 · 9개 | `<details><summary>`. 인쇄 때는 펼침 |
-| 열 레이아웃 | 1장 · 4개 | CSS grid, 모바일 1열 |
-| 색 글자 | 2장 · 47개 | 강조 클래스 1~2종으로 축소 |
+| 토글 · 토글 제목 | 1장 · 9개 | `<details><summary>` HTML 블록 (토글 제목은 `heading-toggle h{n}` 클래스). 인쇄 때는 펼침 (M4) |
+| 열 레이아웃 | 1장 · 4개 | `<div class="columns">` > `<div class="column">`. CSS grid, 좁으면 1열 |
+| 색 글자 | 2장 · 47개 | `tc-{색}` · `bg-{색}` 클래스. 흰 바탕 대비 4.5:1 이상으로 조정한 팔레트 |
 | 페이지 멘션 | 1건 | 내부 링크 (노션 ID → slug) |
-| 「카드 제목」 텍스트 참조 | 약 11곳 | 카드 제목과 정확히 일치하면 내부 링크로 자동 연결 |
+| 「카드 제목」 텍스트 참조 | 약 11곳 | 카드 제목과 정확히 일치하면 내부 링크로 자동 연결 (M3) |
 | 빈 블록 | 43개 | 제거 |
 | 페이지 커버 | 16개 | 내려받아 저장. 썸네일 · 상세 머리 그림으로 쓸지는 내용 확인 후 결정 |
 
@@ -207,7 +208,9 @@ GitHub Actions: 2차 가드(시크릿 금지어) → astro check → astro build
 - 브라우저용 mermaid 라이브러리는 쓰지 않는다. 수백 KB 짜리이고, 렌더 전후로 레이아웃이 흔들려 성능 기준(95)을 지키기 어렵다
 - 빌드 때 렌더하는 방식(rehype-mermaid)도 쓰지 않는다. CI 에 헤드리스 브라우저를 설치해야 한다
 - alt 는 바로 위 제목을 써서 "{제목} 다이어그램"
-- `<br>` 라벨 · subgraph · 한글 상태 다이어그램이 쓰이므로 M1 에서 렌더 결과를 눈으로 확인한다
+- 렌더는 이 PC 의 Chrome · Edge 를 puppeteer 로 띄워서 한다. Chrome 을 따로 내려받지 않는다 (pnpm 이 puppeteer 설치 스크립트를 막아 둠). 다른 PC 면 `PUPPETEER_EXECUTABLE_PATH` 로 지정
+- HTML 라벨(foreignObject)은 `<img>` 로 띄울 때 브라우저마다 다르게 보이므로 순수 SVG 텍스트(`htmlLabels: false`)로 그린다
+- M1 확인: ERD · 상태 다이어그램 · 플로차트가 라이트/다크 모두 렌더된다. 긴 엔티티 이름이 상자 안에서 줄바꿈되는 문제는 M2 에서 조정
 
 ### 6.5 공개 범위 처리: 3겹
 회사 이름은 프로필에 이미 나오므로 완전한 익명은 목표가 아니다. 빼야 할 것은 넷이다.
@@ -216,7 +219,7 @@ GitHub Actions: 2차 가드(시크릿 금지어) → astro check → astro build
 | 겹 | 대상 | 방법 |
 |---|---|---|
 | 1. 노션 원문 수정 | 미수정 결함의 재현 절차, 인증 · 계정 설계 상세, 회사 코드 발췌 | 노션에서 직접 고친다. 노션 링크를 공유하는 한 같은 위험이 이미 있다 |
-| 2. 🔒 블록 제외 | 노션엔 남기고 사이트엔 안 낼 것 (API 경로 표, 파일:라인 참조, 포트 · 환경변수 표 등) | 노션에서 🔒 로 시작하는 토글 · 토글 제목, 또는 🔒 아이콘 콜아웃으로 감싸면 동기화가 자식째 뺀다. 뺀 목록을 동기화 결과에 출력한다 |
+| 2. [비공개] 블록 제외 | 노션엔 남기고 사이트엔 안 낼 것 (API 경로 표, 파일:라인 참조, 포트 · 환경변수 표 등) | 토글 · 토글 제목 · 콜아웃의 글을 `[비공개]` 로 시작하면 동기화가 자식째 뺀다. 뺀 목록을 동기화 결과에 출력한다. 🔒 같은 아이콘은 표식으로 쓰지 않는다 — 잠금 · 암호화를 다루는 카드가 내용 아이콘으로 이미 쓴다 |
 | 3. 문자열 치환 | 모듈 접두사, 내부 약칭, 테이블 접두사, 공통코드 · 에러코드 | 로컬 치환표 + 가드 |
 
 **가드 검사 대상**: 생성된 Markdown, Mermaid 원문과 SVG(텍스트가 들어 있다), 커버 SVG.
@@ -235,9 +238,21 @@ PNG 커버 4개는 글자를 검사할 수 없으므로 눈으로 확인한다.
 | 공개 패턴 (내부 테이블 접두사 `T_[A-Z0-9_]+`, IP, `호스트:포트` 형식, API 경로 형식) | `guard.config.ts` | 공개해도 되는 규칙 |
 | CI 금지어 목록 | Actions 시크릿 `PUBLIC_DENYLIST` | 비공개 |
 
-- 1차 가드(동기화)는 치환 **뒤의** 결과를 치환표의 원문 키 전체와 공개 패턴으로 검사한다. 하나라도 걸리면 파일을 쓰지 않으므로, 유출이 공개 리포의 git 이력에 남기 전에 막힌다
+- 1차 가드(동기화)는 치환 **뒤의** 결과를 금지어 · 치환표의 원문 키 · 공개 패턴으로 검사한다. 공개 카드는 하나라도 걸리면 파일을 쓰지 않으므로, 유출이 공개 리포의 git 이력에 남기 전에 막힌다 (6.7)
 - 2차 가드(CI)는 빌드 결과(`dist/`) 전체를 시크릿 금지어로 검사한다. Markdown 을 손으로 고친 경우도 잡는다
 - 걸리면 치환표에 변형 표기(대소문자, 띄어쓰기 등)를 추가하고 다시 동기화한다
+- 가드는 lockfile 해시 같은 무작위 문자열에서 오탐이 나므로 생성 결과(Markdown · SVG · dist)만 검사한다
+
+### 6.7 초안과 공개
+공개 리포라서 **커밋하는 순간 공개**된다. 그래서 공개 점검 전 카드는 리포에 들어가면 안 된다.
+
+| `sync.config.ts` 의 `publish` | 쓰는 곳 | 가드 |
+|---|---|---|
+| `false` (초안) | `src/content/drafts/features/…` · `public/content-assets/drafts/…` — gitignore 라 CI 빌드에는 존재하지 않는다. 로컬 미리보기 전용, 페이지 위에 "초안" 띠 | 경고만 하고 쓴다 |
+| `true` (공개) | `src/content/features/…` · `public/content-assets/…` — 커밋 대상 | 하나라도 걸리면 쓰지 않는다 |
+
+- `pnpm sync --check [slug …]` — 공개 기준으로 가드를 미리 돌린다 (파일은 쓰지 않음). `publish: true` 로 바꾸기 전에 쓴다
+- 가드 통과 ≠ 공개 점검 완료. 가드는 문자열 패턴만 보므로 회사 코드 발췌 · 결함 서술 같은 내용 항목은 공개 점검 목록으로 따로 확인한다
 
 ---
 
@@ -253,21 +268,25 @@ import { z } from 'astro/zod';
 
 // 프론트매터의 slug 가 엔트리 id 가 된다 (glob 로더 규칙) → 라우트 /{project}/{id}/
 
+// features/ = 공개 점검을 마친 카드(커밋) · drafts/features/ = 점검 전 초안(gitignore — CI 빌드에는 없음)
 const features = defineCollection({
-  loader: glob({ pattern: '**/index.md', base: './src/content/features' }),
+  loader: glob({ pattern: '{features,drafts/features}/**/index.md', base: './src/content' }),
   schema: z.object({
     title: z.string(),                          // 기능명
     project: z.enum(['b2b', 'stt']),
     order: z.number().int(),
-    domain: z.string(),                         // 도메인 (select)
+    domain: z.string().nullable(),              // 도메인 (select)
     apiCount: z.number().int().nullable(),      // API 수 — 비어 있는 카드 있음
     tableCount: z.number().int().nullable(),    // 테이블 수 — STT DB 에는 속성 자체가 없음
     keywords: z.array(z.string()),              // 핵심 키워드 — '·' 와 ',' 로 분리
     evidence: z.array(z.enum(['measured', 'tested', 'static', 'estimated'])),
+    draft: z.boolean(),                         // publish: false 로 동기화된 초안 (6.7)
+    cover: z.string().nullable(),               // 커버 경로 (public/content-assets/…)
     notionEditedAt: z.coerce.date(),            // 기준일
   }),
 });
 
+// M3 에서 추가
 const docs = defineCollection({                 // 노션 '프로젝트 소개' DB
   loader: glob({ pattern: '**/index.md', base: './src/content/docs' }),
   schema: z.object({
@@ -310,18 +329,20 @@ const docs = defineCollection({                 // 노션 '프로젝트 소개' 
 ```
 06171002.github.io/
 ├─ .github/workflows/deploy.yml
-├─ scripts/sync/              # fetch · exclude · redact · convert · diagrams · assets · guard · write
-├─ scripts/guard.ts           # CI 2차 가드 (dist 검사)
+├─ scripts/sync/              # index(CLI) · notion · convert · richtext · html · markdown · diagrams · guard · redact · env
+├─ scripts/guard.ts           # CI 2차 가드 (dist 검사) — M3
 ├─ sync.config.ts             # 공개 설정: 허용 목록(slug · project · order · evidence)
 ├─ guard.config.ts            # 공개 패턴
 ├─ src/
 │  ├─ content.config.ts
-│  ├─ content/features/{b2b,stt}/{slug}/index.md  (+ diagram-*.svg, cover.*)
-│  ├─ content/docs/{b2b,stt}/{slug}/index.md
-│  ├─ data/profile.ts · skills.ts · highlights.ts
+│  ├─ content/features/{b2b,stt}/{slug}/index.md   # 공개 카드 (커밋)
+│  ├─ content/drafts/features/…                    # 초안 (gitignore)
+│  ├─ content/docs/{b2b,stt}/{slug}/index.md       # M3
+│  ├─ data/projects.ts (+ M2: profile · skills · highlights)
 │  ├─ components/ · layouts/
 │  ├─ pages/index.astro · [project]/index.astro · [project]/[slug].astro · 404.astro
-│  └─ styles/tokens.css
+│  └─ styles/global.css · content.css
+├─ public/content-assets/{project}/{slug}/          # 다이어그램 SVG · 커버 (초안은 drafts/ 아래, gitignore)
 ├─ docs/design.md             # 이 문서
 ├─ CLAUDE.md · README.md
 └─ astro.config.mjs           # site: 'https://06171002.github.io'
@@ -365,7 +386,9 @@ const docs = defineCollection({                 // 노션 '프로젝트 소개' 
 | 빌드할 때마다 노션 API 로 직접 렌더 (노션 로더) | 노션 수정이 검토 없이 바로 공개된다 · 토큰을 CI 에 둬야 한다 · 노션 장애가 배포를 막는다 |
 | 노션 '웹에 게시' 링크만 사용 | 디자인 · 주소 · 검색 노출을 통제할 수 없고 일반화도 불가 |
 | 문자열 이어붙이기 변환기 | 이스케이프 · 인접 강조 · 중첩 블록에서 깨진다 → AST 변환 |
-| MDX 생성 | 자동 생성 본문의 `{` `<` 이스케이프 문제 → Markdown + 지시문 |
+| MDX 생성 | 자동 생성 본문의 `{` `<` 이스케이프 문제 → Markdown + 원시 HTML 블록 |
+| remark-directive 지시문(`:::callout`) | Astro 7 기본 처리기(Sätteri)는 remark 플러그인을 돌리지 않아 unified 처리기를 따로 설치해야 한다. `상태:DONE` 의 `:DONE` 처럼 본문 글자가 지시문으로 잘못 읽히는 함정도 있다 → 원시 HTML 블록 |
+| 🔒 아이콘을 비공개 표식으로 | 잠금 · 암호화를 다루는 카드가 이미 내용 아이콘으로 쓴다 → `[비공개]` 글머리 |
 | 브라우저에서 Mermaid 렌더 | 수백 KB JS, 레이아웃 흔들림 → 동기화 때 SVG |
 | 빌드 때 Mermaid 렌더 | CI 에 헤드리스 브라우저 필요 → 동기화 때 SVG |
 | Next.js 정적 내보내기 | 이 규모에 비해 클라이언트 JS 와 설정이 과하다 |
@@ -387,15 +410,16 @@ const docs = defineCollection({                 // 노션 '프로젝트 소개' 
 M3 전까지 배포본에는 공개 점검을 마친 페이지만 올라간다. 허용 목록이 관문이다.
 
 **진행 상황**
-- 2026-10-19 · M0: 스캐폴드(Astro 7.4.0) · Prettier · 배포 워크플로 작성, 로컬 빌드 통과. GitHub 리포 생성 · 첫 배포 대기
+- 2026-10-19 · M0 완료: 스캐폴드(Astro 7.4.0) · Prettier · 배포 워크플로, https://06171002.github.io/ 첫 배포 (커밋 07675a0)
+- 2026-10-19 · M1 파일럿 완료: 노션 내부 연결(읽기 전용) · sync 파이프라인 · 가드 · 초안 폴더. 반품/교환 · 기업회원요청관리가 로컬에서 렌더되고 콜아웃 · 표 · 토글 · 열 · 다이어그램 수가 노션과 일치. `--check` 로 기업회원요청관리가 가드에 막히는 것 확인. 넘긴 것: 코드 25줄 접기(M2) · 「카드 제목」 자동 링크 · CI 2차 가드(M3)
 
 ---
 
 ## 14. 직접 하실 일
 
-1. **노션 통합(Integration) 만들기**: 권한은 콘텐츠 읽기만. 포트폴리오 페이지에 연결
-2. **토큰 입력**: 발급된 토큰은 직접 `C:\dev\portfolio-private\.env` 에 넣는다 (토큰은 제가 다루지 않습니다)
-3. **공개 점검 1겹 · 2겹**: `C:\dev\portfolio-private\public-review.md` 의 1겹 항목은 노션 원문에서 고치고, 2겹 대상은 🔒 로 감싼다
+1. ✅ **노션 내부 연결** `portfolio-sync` (콘텐츠 읽기만) · 포트폴리오 페이지 연결 — 2026-10-19 완료
+2. ✅ **토큰 입력** `C:\dev\portfolio-private\.env` — 2026-10-19 완료 (토큰은 제가 다루지 않습니다)
+3. **공개 점검 1겹 · 2겹**: `C:\dev\portfolio-private\public-review.md` 의 1겹 항목은 노션 원문에서 고치고, 2겹 대상은 토글로 감싸 제목을 `[비공개]` 로 시작한다
 4. **정합성 수정**: 같은 파일의 카드 간 불일치 10건 · 근거 표기 보강 · 오타 · 끊긴 참조
 5. (선택) **검증 속성**: 두 '담당 기능 상세' DB 에 `검증` 다중 선택 속성(실측 / 테스트 / 정적 분석 / 추정) 추가. 노션 카드에도 보이면 좋은 정보이고, 사이트 근거 배지가 이 값을 쓴다. 안 만들면 `sync.config.ts` 에 카드별로 적는다
 

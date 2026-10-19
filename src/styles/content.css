@@ -1,0 +1,554 @@
+/* 동기화 본문 스타일 — M1 최소안. 디자인 시스템은 M2 에서 확정한다 (docs/design.md 8장) */
+:root {
+    --surface: #f4f5f7;
+    --chosen: #e7f4ea;
+    --banner-bg: #fff4d6;
+    --banner-fg: #6b4e00;
+
+    /* 콜아웃 톤: 배경 / 테두리 */
+    --c-default: #f4f5f7;
+    --c-default-b: #e2e5ea;
+    --c-brown: #f7f1ec;
+    --c-brown-b: #e8d9cc;
+    --c-orange: #fdf3e7;
+    --c-orange-b: #f3d9b5;
+    --c-yellow: #fdf8e1;
+    --c-yellow-b: #efe2a6;
+    --c-green: #edf7ef;
+    --c-green-b: #c9e6cf;
+    --c-blue: #edf3fd;
+    --c-blue-b: #c9daf7;
+    --c-purple: #f4effc;
+    --c-purple-b: #ddd0f3;
+    --c-pink: #fcf0f5;
+    --c-pink-b: #f2cfe0;
+    --c-red: #fdf0ef;
+    --c-red-b: #f3cdca;
+    --c-scenario-b: #e29b94;
+    --c-limits-b: #b9bfc8;
+    --c-evidence-b: #8fcb9d;
+
+    /* 노션 글자색 · 배경색 (흰 바탕 대비 4.5:1 이상으로 조정) */
+    --tc-gray: #6b6b6b;
+    --tc-brown: #8a5a44;
+    --tc-orange: #b35c00;
+    --tc-yellow: #8a6d00;
+    --tc-green: #2f7350;
+    --tc-blue: #2565a3;
+    --tc-purple: #7a4fa3;
+    --tc-pink: #a8326f;
+    --tc-red: #c0392b;
+    --bg-gray: #eeeeec;
+    --bg-brown: #f2e7df;
+    --bg-orange: #fbe6d2;
+    --bg-yellow: #fbf1c9;
+    --bg-green: #def0e3;
+    --bg-blue: #dbe9f7;
+    --bg-purple: #ebe1f5;
+    --bg-pink: #f7dfeb;
+    --bg-red: #f8dcd9;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --surface: #1b1e23;
+        --chosen: #17301f;
+        --banner-bg: #3a3112;
+        --banner-fg: #f3d98a;
+
+        --c-default: #1b1e23;
+        --c-default-b: #2c3038;
+        --c-brown: #241e1a;
+        --c-brown-b: #3d3128;
+        --c-orange: #2a2117;
+        --c-orange-b: #4a3820;
+        --c-yellow: #29261a;
+        --c-yellow-b: #4a4423;
+        --c-green: #17241b;
+        --c-green-b: #2a4632;
+        --c-blue: #172030;
+        --c-blue-b: #2a3d5c;
+        --c-purple: #211b2c;
+        --c-purple-b: #3d3254;
+        --c-pink: #2a1a22;
+        --c-pink-b: #4e2e3e;
+        --c-red: #2a1a1a;
+        --c-red-b: #4e2c2a;
+        --c-scenario-b: #8a4640;
+        --c-limits-b: #4f5560;
+        --c-evidence-b: #3a7d4c;
+
+        --tc-gray: #a0a4ab;
+        --tc-brown: #c99a80;
+        --tc-orange: #f0a463;
+        --tc-yellow: #e8c55a;
+        --tc-green: #7cc79a;
+        --tc-blue: #7db2ec;
+        --tc-purple: #c0a1e6;
+        --tc-pink: #ec93c0;
+        --tc-red: #f08a80;
+        --bg-gray: #2c2f34;
+        --bg-brown: #3a2d25;
+        --bg-orange: #44301d;
+        --bg-yellow: #423a1c;
+        --bg-green: #1e3a29;
+        --bg-blue: #1d3350;
+        --bg-purple: #33284a;
+        --bg-pink: #432636;
+        --bg-red: #46262a;
+    }
+
+    /* Shiki 이중 테마 */
+    .astro-code,
+    .astro-code span {
+        color: var(--shiki-dark) !important;
+        background-color: var(--shiki-dark-bg) !important;
+        font-style: var(--shiki-dark-font-style) !important;
+        font-weight: var(--shiki-dark-font-weight) !important;
+        text-decoration: var(--shiki-dark-text-decoration) !important;
+    }
+}
+
+/* ---------- 문서 머리 ---------- */
+.article {
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: 2.5rem 1rem 4rem;
+}
+
+.crumbs {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.875rem;
+}
+
+.crumbs a {
+    color: inherit;
+}
+
+.article h1 {
+    margin: 0.5rem 0 0.75rem;
+    font-size: 2rem;
+    line-height: 1.3;
+}
+
+.meta,
+.basis {
+    margin: 0.25rem 0;
+    color: var(--muted);
+    font-size: 0.9375rem;
+}
+
+.keywords,
+.evidence {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    margin: 0.75rem 0;
+    padding: 0;
+    list-style: none;
+}
+
+.keywords li {
+    padding: 0.125rem 0.625rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 0.8125rem;
+}
+
+.evidence li {
+    padding: 0.125rem 0.5rem;
+    border-radius: 4px;
+    background: var(--surface);
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+.evidence-measured {
+    color: var(--tc-blue);
+}
+
+.evidence-tested {
+    color: var(--tc-green);
+}
+
+.evidence-static {
+    color: var(--tc-purple);
+}
+
+.evidence-estimated {
+    color: var(--tc-orange);
+}
+
+.draft-banner,
+.draft-tag {
+    border-radius: 6px;
+    background: var(--banner-bg);
+    color: var(--banner-fg);
+    font-size: 0.875rem;
+}
+
+.draft-banner {
+    margin: 0 0 1rem;
+    padding: 0.5rem 0.75rem;
+}
+
+.draft-tag {
+    margin-left: 0.5rem;
+    padding: 0.0625rem 0.375rem;
+    font-size: 0.75rem;
+}
+
+.feature-list {
+    padding: 0;
+    list-style: none;
+}
+
+.feature-list > li {
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.feature-list a {
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+/* ---------- 본문 ---------- */
+.prose {
+    margin-top: 2rem;
+}
+
+.prose h2 {
+    margin: 2.75rem 0 0.75rem;
+    padding-bottom: 0.375rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 1.5rem;
+    line-height: 1.35;
+}
+
+.prose h3 {
+    margin: 2rem 0 0.5rem;
+    font-size: 1.25rem;
+    line-height: 1.4;
+}
+
+.prose h4,
+.prose h5,
+.prose h6 {
+    margin: 1.5rem 0 0.5rem;
+    font-size: 1.0625rem;
+}
+
+.prose p,
+.prose ul,
+.prose ol {
+    margin: 0.75rem 0;
+}
+
+.prose li + li {
+    margin-top: 0.25rem;
+}
+
+.prose blockquote {
+    margin: 1rem 0;
+    padding-left: 1rem;
+    border-left: 3px solid var(--border);
+    color: var(--muted);
+}
+
+.prose hr {
+    margin: 2.5rem 0;
+    border: 0;
+    border-top: 1px solid var(--border);
+}
+
+.prose :not(pre) > code {
+    padding: 0.1em 0.35em;
+    border-radius: 4px;
+    background: var(--surface);
+    font-size: 0.875em;
+}
+
+.prose pre {
+    overflow-x: auto;
+    padding: 0.875rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+/* 표 — 넓으면 표 안에서만 가로 스크롤 */
+.table-wrap {
+    overflow-x: auto;
+    margin: 1.25rem 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.table-wrap table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+}
+
+.table-wrap th,
+.table-wrap td {
+    min-width: 6rem;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    vertical-align: top;
+}
+
+.table-wrap th {
+    background: var(--surface);
+    font-weight: 600;
+}
+
+.table-wrap tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.table-wrap.row-header td:first-child {
+    font-weight: 600;
+}
+
+.table-wrap.no-column-header th {
+    background: transparent;
+    font-weight: 400;
+}
+
+/* 대안 비교표의 ✅(채택안) 행 */
+.table-wrap tr:has(.chosen-mark) td {
+    background: var(--chosen);
+}
+
+/* 콜아웃 */
+.callout {
+    position: relative;
+    margin: 1.25rem 0;
+    padding: 0.875rem 1rem 0.875rem 2.875rem;
+    border: 1px solid var(--c-default-b);
+    border-radius: 8px;
+    background: var(--c-default);
+}
+
+.callout::before {
+    content: attr(data-icon);
+    position: absolute;
+    top: 0.875rem;
+    left: 1rem;
+}
+
+.callout:not([data-icon]) {
+    padding-left: 1rem;
+}
+
+.callout > :first-child {
+    margin-top: 0;
+}
+
+.callout > :last-child {
+    margin-bottom: 0;
+}
+
+.tone-brown {
+    border-color: var(--c-brown-b);
+    background: var(--c-brown);
+}
+
+.tone-orange {
+    border-color: var(--c-orange-b);
+    background: var(--c-orange);
+}
+
+.tone-yellow {
+    border-color: var(--c-yellow-b);
+    background: var(--c-yellow);
+}
+
+.tone-green {
+    border-color: var(--c-green-b);
+    background: var(--c-green);
+}
+
+.tone-blue {
+    border-color: var(--c-blue-b);
+    background: var(--c-blue);
+}
+
+.tone-purple {
+    border-color: var(--c-purple-b);
+    background: var(--c-purple);
+}
+
+.tone-pink {
+    border-color: var(--c-pink-b);
+    background: var(--c-pink);
+}
+
+.tone-red {
+    border-color: var(--c-red-b);
+    background: var(--c-red);
+}
+
+.tone-scenario {
+    border-color: var(--c-red-b);
+    border-left: 4px solid var(--c-scenario-b);
+    background: var(--c-red);
+}
+
+.tone-evidence {
+    border-color: var(--c-evidence-b);
+    background: var(--c-green);
+}
+
+/* "이 검증이 말하지 않는 것" — 한계는 줄이지 않고 눈에 띄게 */
+.tone-limits {
+    border: 1px dashed var(--c-limits-b);
+    background: transparent;
+}
+
+/* 토글 */
+.prose details {
+    margin: 1rem 0;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.prose summary {
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.prose details[open] > summary {
+    margin-bottom: 0.5rem;
+}
+
+.prose details.h2 > summary {
+    font-size: 1.375rem;
+}
+
+.prose details.h3 > summary {
+    font-size: 1.1875rem;
+}
+
+/* 열 레이아웃 — 좁으면 한 열 */
+.columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.column > :first-child {
+    margin-top: 0;
+}
+
+/* 다이어그램 — 라이트 · 다크 두 벌 중 하나만 */
+figure.diagram {
+    overflow-x: auto;
+    margin: 1.5rem 0;
+    text-align: center;
+}
+
+figure.diagram img {
+    max-width: 100%;
+    height: auto;
+}
+
+.diagram-dark {
+    display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+    .diagram-light {
+        display: none;
+    }
+
+    .diagram-dark {
+        display: inline-block;
+    }
+}
+
+/* 노션 글자색 · 배경색 */
+.tc-gray {
+    color: var(--tc-gray);
+}
+
+.tc-brown {
+    color: var(--tc-brown);
+}
+
+.tc-orange {
+    color: var(--tc-orange);
+}
+
+.tc-yellow {
+    color: var(--tc-yellow);
+}
+
+.tc-green {
+    color: var(--tc-green);
+}
+
+.tc-blue {
+    color: var(--tc-blue);
+}
+
+.tc-purple {
+    color: var(--tc-purple);
+}
+
+.tc-pink {
+    color: var(--tc-pink);
+}
+
+.tc-red {
+    color: var(--tc-red);
+}
+
+mark[class^='bg-'] {
+    padding: 0 0.15em;
+    border-radius: 3px;
+    color: inherit;
+}
+
+.bg-gray {
+    background: var(--bg-gray);
+}
+
+.bg-brown {
+    background: var(--bg-brown);
+}
+
+.bg-orange {
+    background: var(--bg-orange);
+}
+
+.bg-yellow {
+    background: var(--bg-yellow);
+}
+
+.bg-green {
+    background: var(--bg-green);
+}
+
+.bg-blue {
+    background: var(--bg-blue);
+}
+
+.bg-purple {
+    background: var(--bg-purple);
+}
+
+.bg-pink {
+    background: var(--bg-pink);
+}
+
+.bg-red {
+    background: var(--bg-red);
+}

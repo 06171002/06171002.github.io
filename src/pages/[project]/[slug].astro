@@ -1,0 +1,60 @@
+---
+import type { InferGetStaticPropsType } from 'astro';
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { evidenceLabel, projects } from '../../data/projects';
+import '../../styles/content.css';
+
+export async function getStaticPaths() {
+    const entries = await getCollection('features');
+    return entries.map((entry) => ({
+        params: { project: entry.data.project, slug: entry.id },
+        props: { entry },
+    }));
+}
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { entry } = Astro.props as Props;
+const { Content } = await render(entry);
+const data = entry.data;
+const project = projects[data.project];
+// 본문의 "현재" · "5주 전" 같은 상대 표현의 기준점 (docs/design.md 5.3)
+const basis = new Intl.DateTimeFormat('ko-KR', { dateStyle: 'long', timeZone: 'Asia/Seoul' }).format(
+    data.notionEditedAt
+);
+const meta = [
+    data.domain,
+    data.apiCount !== null ? `API ${data.apiCount}개` : null,
+    data.tableCount !== null ? `테이블 ${data.tableCount}개` : null,
+].filter(Boolean);
+---
+
+<Base title={`${data.title} · 이상진`} description={`${project.name} — ${data.title}`}>
+    <main class="article">
+        {data.draft && <p class="draft-banner">초안 · 공개 점검 전이라 배포되지 않는 페이지입니다</p>}
+        <nav class="crumbs" aria-label="경로">
+            <a href="/">홈</a> › <a href={`/${data.project}/`}>{project.name}</a>
+        </nav>
+        <h1>{data.title}</h1>
+        {meta.length > 0 && <p class="meta">{meta.join(' · ')}</p>}
+        {data.evidence.length > 0 && (
+            <ul class="evidence" aria-label="근거">
+                {data.evidence.map((kind) => (
+                    <li class={`evidence-${kind}`}>{evidenceLabel[kind]}</li>
+                ))}
+            </ul>
+        )}
+        {data.keywords.length > 0 && (
+            <ul class="keywords" aria-label="핵심 키워드">
+                {data.keywords.map((keyword) => (
+                    <li>{keyword}</li>
+                ))}
+            </ul>
+        )}
+        <p class="basis">노션 {basis} 기준</p>
+        <div class="prose">
+            <Content />
+        </div>
+    </main>
+</Base>
