@@ -1,6 +1,6 @@
 // 홈 대표 사례 — 어떤 카드를 어떤 순서로 싣고, 큰 숫자 · 근거 배지를 무엇으로 할지 정한다 (docs/design.md 5.1)
 // 성과 제목 · 문제 · 해결 · 결과 문장은 카드의 '한눈에'(노션 공개용 사본 속성)에서 온다.
-// 값은 카드 본문의 문장을 그대로 옮긴 것이다 (2026-10-19 동기화본으로 확인)
+// 값은 카드 본문의 문장을 그대로 옮긴 것이다 (2026-10-19 동기화본으로 확인, 실시간 STT 는 2026-11-09 정정본)
 import type { Evidence, Project } from '../../sync.config';
 
 export interface Highlight {
@@ -42,5 +42,13 @@ export const highlights: Highlight[] = [
         project: 'b2b',
         slug: 'cart',
         cardTitle: '장바구니',
+    },
+    {
+        value: '17/17',
+        label: '발화 분할 상태머신 테스트 17/17 통과 · 무음만 들어오면 세그먼트가 나오지 않는다',
+        evidence: 'tested',
+        project: 'stt',
+        slug: 'realtime-stt',
+        cardTitle: '실시간 스트리밍 STT',
     },
 ];
