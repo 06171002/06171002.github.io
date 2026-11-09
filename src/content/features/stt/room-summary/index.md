@@ -175,18 +175,6 @@ await 방 통합 요약 저장(방, 요약)
 
 </aside>
 
-### 이 검증이 말하지 않는 것
-
-<aside class="callout tone-gray" data-icon="📐">
-
-- **트리거 이후 경로는 미검증** — '요약 중' 전이, Celery 태스크 발행, 재시도(최대 5회), 참가자 대화록 결합·LLM 호출은 포함되지 않았다.
-- **중복 참가 409 가드 미검증** — 참가자 중복 확인 분기는 엔드포인트 계층이라 별도다.
-- **경쟁 조건은 미검증** — 두 참가자가 동시에 종료해 판정이 겹칠 때 요약이 두 번 발행되지 않는지는 단위 테스트로 증명할 수 없다. 태스크 진입 시 재확인(Celery 재시도)이 그 방어책이나 <strong>실측하지 않았다.</strong>
-
-</aside>
-
----
-
 ## 자동 요약 트리거 흐름
 
 <figure class="diagram"><img src="/content-assets/stt/room-summary/diagram-2.light.svg" alt="자동 요약 트리거 흐름 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/room-summary/diagram-2.dark.svg" alt="자동 요약 트리거 흐름 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
