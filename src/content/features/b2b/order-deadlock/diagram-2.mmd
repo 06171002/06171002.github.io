@@ -1,0 +1,21 @@
+sequenceDiagram
+    participant o as 즉시주문
+    participant p1 as 상품 1001
+    participant p2 as 상품 2002
+    participant a as 결재 승인
+    rect rgba(220, 80, 70, 0.14)
+        Note over o,a: 수정 전 — 즉시주문만 담은 순서로 잠근다
+        o->>p2: X 획득
+        a->>p1: S 획득
+        a-->>p2: S 요청 · 대기
+        o-->>p1: X 요청 · 대기
+        Note over o,a: 서로 기다림 → 교착, 결재 승인 롤백
+    end
+    rect rgba(60, 160, 90, 0.14)
+        Note over o,a: 수정 후 — 즉시주문도 상품번호 순으로 먼저 잠근다
+        o->>p1: X 획득
+        a-->>p1: S 요청 · 대기 (줄을 선다)
+        o->>p2: X 획득 · 주문 커밋
+        a->>p1: S 획득
+        a->>p2: S 획득 · 승인 완료
+    end

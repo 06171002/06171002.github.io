@@ -11,7 +11,7 @@ cover: null
 notionEditedAt: "2026-10-19"
 description: "동시 주문 부하 테스트에서 난 교착을 InnoDB 교착 기록으로 추적해 원인을 확정하고, 경로별 교착 여섯 가지를 고친 과정. 25명 동시 주문 로컬 부하 테스트에서 교착 23건을 0건으로 줄였다."
 glance: {"headline":"동시 주문 교착 23건 → 0건 — InnoDB 교착 기록으로 원인 여섯 가지를 찾아 고쳤다","problem":["동시에 120건을 주문하는 부하 테스트에서 일부 주문이 교착으로 강제 롤백됐다. 단위 테스트로는 잡히지 않는 종류의 문제다.","처음 세운 가설 둘은 확인하고 버렸는데, 그중 하나는 맞았다. 부하용 시드 데이터로는 애초에 보일 수 없는 조건이었다."],"solution":["교착 기록을 직접 읽어 원인 여섯 가지를 특정했다. 셋은 검증 · 중복 검사 문장이 건 공유 락이었고, 셋은 경로마다 엇갈린 잠금 순서였다.","공유 락은 락 없는 읽기 · 행마다 다른 임시 번호 · 갱신 한 번으로 없앴고, 잠금 순서는 상품을 잡는 경로는 상품번호 순, 취소 경로는 주문 라인부터로 맞췄다."],"result":["25명 동시 주문 로컬 부하 테스트(3회)에서 교착 23건 → 0건. 같은 장바구니의 주문 결과는 수정 전과 같았다.","경로별 2세션 재현은 모두 3/3 → 0/3, 25개 세션 동시 채번은 교착 20~22건 → 0건 · 다른 카운터 간섭 2.2초 → 1ms."]}
-leadFigure: {"light":"/content-assets/b2b/order-deadlock/diagram-1.light.svg","dark":"/content-assets/b2b/order-deadlock/diagram-1.dark.svg","alt":"해결: 즉시주문도 상품번호 순서로 먼저 잡는다 다이어그램"}
+leadFigure: {"light":"/content-assets/b2b/order-deadlock/diagram-1.light.svg","dark":"/content-assets/b2b/order-deadlock/diagram-1.dark.svg","alt":"원인을 찾은 과정 다이어그램"}
 ---
 
 ## 먼저, S락과 X락
@@ -112,6 +112,8 @@ MySQL은 이걸 감지하면 한쪽을 강제로 롤백한다(`ERROR 1213`). 보
 확인할 수 없는 데이터로 확인하고 가설을 버린 셈이다. 0건이 나왔다고 문제가 없는 게 아니었다. 이 데이터로는 애초에 보일 수가 없었다.
 
 </aside>
+
+<figure class="diagram"><img src="/content-assets/b2b/order-deadlock/diagram-1.light.svg" alt="원인을 찾은 과정 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/order-deadlock/diagram-1.dark.svg" alt="원인을 찾은 과정 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
 ---
 
@@ -538,7 +540,7 @@ U1 잠금 순서: [B, A]      U2 잠금 순서: [A, B]      <- 정반대
 
 #### 해결: 즉시주문도 상품번호 순서로 먼저 잡는다
 
-<figure class="diagram"><img src="/content-assets/b2b/order-deadlock/diagram-1.light.svg" alt="해결: 즉시주문도 상품번호 순서로 먼저 잡는다 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/order-deadlock/diagram-1.dark.svg" alt="해결: 즉시주문도 상품번호 순서로 먼저 잡는다 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
+<figure class="diagram"><img src="/content-assets/b2b/order-deadlock/diagram-2.light.svg" alt="해결: 즉시주문도 상품번호 순서로 먼저 잡는다 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/order-deadlock/diagram-2.dark.svg" alt="해결: 즉시주문도 상품번호 순서로 먼저 잡는다 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
 주문 생성 프로시저가 채번 뒤, 카트 루프에 들어가기 직전에 장바구니 상품을 상품번호 순서로 먼저 `FOR UPDATE` 한다.
 
