@@ -41,6 +41,7 @@ const GENERIC_MEMBERS = [
     'classDiagram',
     'sequenceDiagram',
     'notionEditedAt',
+    'leadFigure',
     'entrySet',
     'getKey',
     'getValue',

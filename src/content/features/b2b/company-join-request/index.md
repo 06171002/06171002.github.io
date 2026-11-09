@@ -10,6 +10,7 @@ draft: false
 cover: null
 notionEditedAt: "2026-08-31"
 description: null
+leadFigure: {"light":"/content-assets/b2b/company-join-request/diagram-3.light.svg","dark":"/content-assets/b2b/company-join-request/diagram-3.dark.svg","alt":"승인 시 데이터 생성 흐름 다이어그램"}
 ---
 
 ## 개요

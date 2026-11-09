@@ -10,6 +10,7 @@ draft: false
 cover: null
 notionEditedAt: "2026-08-31"
 description: null
+leadFigure: {"light":"/content-assets/stt/async-queue-observability/diagram-1.light.svg","dark":"/content-assets/stt/async-queue-observability/diagram-1.dark.svg","alt":"핵심 설계 결정 다이어그램"}
 ---
 
 ## 개요
@@ -56,6 +57,8 @@ async 커넥션 풀을 Celery 멀티프로세스·멀티이벤트루프에서 �
 ---
 
 ## 핵심 설계 결정
+
+<figure class="diagram"><img src="/content-assets/stt/async-queue-observability/diagram-1.light.svg" alt="핵심 설계 결정 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/async-queue-observability/diagram-1.dark.svg" alt="핵심 설계 결정 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
 ### 1. 동기↔async 브리지 + 결과는 DB 직접 저장
 

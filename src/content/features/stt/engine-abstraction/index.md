@@ -10,6 +10,7 @@ draft: false
 cover: null
 notionEditedAt: "2026-08-31"
 description: null
+leadFigure: {"light":"/content-assets/stt/engine-abstraction/diagram-1.light.svg","dark":"/content-assets/stt/engine-abstraction/diagram-1.dark.svg","alt":"구조 다이어그램"}
 ---
 
 ## 개요

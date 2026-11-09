@@ -104,7 +104,7 @@
     margin-bottom: 0.625rem;
 }
 
-/* ---------- 한눈에: 대표 사례의 성과 제목 + 문제 · 해결 · 결과 (docs/design.md 5.3) ---------- */
+/* ---------- 한눈에: 성과 제목 + 그림 + 문제 · 해결 · 결과 (docs/design.md 5.3). 그림만 있는 카드도 같은 상자 ---------- */
 .glance {
     margin: 1.25rem 0 0;
     padding: 1rem 1.25rem 1.125rem;
@@ -131,12 +131,32 @@
 }
 
 figure.glance-figure {
-    margin: 0 0 1rem;
+    margin: 0.5rem 0 1rem;
 }
 
-/* 세로로 긴 흐름도도 요약 상자를 다 차지하지 않게 높이를 묶는다 (가로세로 비율은 유지) */
+figure.glance-figure:last-child {
+    margin-bottom: 0;
+}
+
+figure.glance-figure a {
+    display: block;
+    color: var(--muted);
+    text-decoration: none;
+}
+
+/* 세로로 긴 시퀀스도도 요약 상자를 다 차지하지 않게 높이를 묶는다 (가로세로 비율은 유지) */
 figure.glance-figure img {
-    max-height: 24rem;
+    max-height: 36rem;
+}
+
+.glance-figure-more {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: var(--text-xs);
+}
+
+figure.glance-figure a:hover .glance-figure-more {
+    color: var(--accent);
 }
 
 /* ---------- 목차 ---------- */
@@ -614,7 +634,8 @@ mark[class^='bg-'] {
 @media print {
     .toc-aside,
     .toc-mobile,
-    .pager {
+    .pager,
+    .glance-figure-more {
         display: none !important;
     }
 

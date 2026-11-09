@@ -10,6 +10,7 @@ draft: false
 cover: null
 notionEditedAt: "2026-09-06"
 description: null
+leadFigure: {"light":"/content-assets/b2b/order-payment/diagram-4.light.svg","dark":"/content-assets/b2b/order-payment/diagram-4.dark.svg","alt":"4. 결제 이중 경로 다이어그램"}
 ---
 
 ## 개요

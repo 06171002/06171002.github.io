@@ -10,6 +10,7 @@ draft: false
 cover: null
 notionEditedAt: "2026-08-30"
 description: null
+leadFigure: {"light":"/content-assets/stt/room-summary/diagram-2.light.svg","dark":"/content-assets/stt/room-summary/diagram-2.dark.svg","alt":"자동 요약 트리거 흐름 다이어그램"}
 ---
 
 ## 개요

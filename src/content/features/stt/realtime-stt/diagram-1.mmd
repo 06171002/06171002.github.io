@@ -1,7 +1,10 @@
-flowchart LR
-    WS["WS 수신<br/>Opus·PCM·WebM"] --> CV["오디오 변환기<br/>포맷별 변환"]
-    CV --> VAD["Silero VAD<br/>발화 구간 분할"]
-    VAD --> IQ["입력 큐<br/>asyncio.Queue"]
-    IQ --> W["STT 워커<br/>ThreadPoolExecutor(3)"]
-    W --> RQ["결과 큐"]
-    RQ --> OUT["WS 송신 + Redis Pub/Sub + DB"]
+flowchart TB
+    subgraph rx["수신 · 발화 분할"]
+        direction LR
+        ws["WS 수신<br/>Opus·PCM·WebM"] --> cv["오디오 변환기<br/>포맷별 변환"] --> vad["Silero VAD<br/>발화 구간 분할"] --> iq["입력 큐<br/>asyncio.Queue"]
+    end
+    subgraph tx["추론 · 결과"]
+        direction LR
+        w["STT 워커<br/>ThreadPoolExecutor(3)"] --> rq["결과 큐"] --> out["WS 송신 + Redis Pub/Sub + DB"]
+    end
+    rx --> tx

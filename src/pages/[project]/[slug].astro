@@ -47,8 +47,9 @@ const basis = new Intl.DateTimeFormat('ko-KR', { dateStyle: 'long', timeZone: 'A
     data.notionEditedAt
 );
 const meta = [data.domain, `${basis} 기준`].filter(Boolean);
-// 대표 사례만 갖는 '한눈에' — 성과 제목 + (그림) + 문제 · 해결 · 결과 (docs/design.md 5.3)
+// '한눈에' — 성과 제목 + 그림 + 문제 · 해결 · 결과 (docs/design.md 5.3). 문장은 대표 사례만, 그림은 어느 카드나 가질 수 있다
 const glance = data.glance ?? null;
+const leadFigure = data.leadFigure ?? null;
 // 검색 · 공유 설명: 사본의 '요약' 속성 → 성과 제목 → 개요 첫 문단 → 제목 + 키워드
 const description =
     data.description ??
@@ -84,30 +85,30 @@ const description =
                 )}
             </header>
 
-            {glance && (
+            {(glance || leadFigure) && (
                 <section class="glance" aria-labelledby="glance-title">
                     <h2 id="glance-title" class="glance-label">
                         한눈에
                     </h2>
-                    <p class="glance-headline">{glance.headline}</p>
-                    {/* 첫 화면에 있는 그림이라 지연 로딩하지 않는다 */}
-                    {glance.figure && (
+                    {glance && <p class="glance-headline">{glance.headline}</p>}
+                    {/* 첫 화면에 있는 그림이라 지연 로딩하지 않는다. 좁은 화면에서는 글자가 작아지므로 원본을 새 탭으로 연다 */}
+                    {leadFigure && (
                         <figure class="diagram glance-figure">
-                            <img
-                                src={glance.figure.light}
-                                alt={glance.figure.alt}
-                                class="diagram-light"
-                                decoding="async"
-                            />
-                            <img
-                                src={glance.figure.dark}
-                                alt={glance.figure.alt}
-                                class="diagram-dark"
-                                decoding="async"
-                            />
+                            <a href={leadFigure.light} target="_blank" rel="noopener">
+                                <img
+                                    src={leadFigure.light}
+                                    alt={leadFigure.alt}
+                                    class="diagram-light"
+                                    decoding="async"
+                                />
+                                <img src={leadFigure.dark} alt={leadFigure.alt} class="diagram-dark" decoding="async" />
+                                <span class="glance-figure-more">그림 크게 보기 ↗</span>
+                            </a>
                         </figure>
                     )}
-                    <GlanceRows problem={glance.problem} solution={glance.solution} result={glance.result} />
+                    {glance && (
+                        <GlanceRows problem={glance.problem} solution={glance.solution} result={glance.result} />
+                    )}
                 </section>
             )}
 

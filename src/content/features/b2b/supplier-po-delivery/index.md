@@ -10,6 +10,7 @@ draft: false
 cover: null
 notionEditedAt: "2026-08-31"
 description: null
+leadFigure: {"light":"/content-assets/b2b/supplier-po-delivery/diagram-3.light.svg","dark":"/content-assets/b2b/supplier-po-delivery/diagram-3.dark.svg","alt":"핵심 설계 결정 다이어그램"}
 ---
 
 ## 개요
@@ -132,6 +133,8 @@ PO 라인 상태와 배송 상태를 분리.\
 ---
 
 ## 핵심 설계 결정
+
+<figure class="diagram"><img src="/content-assets/b2b/supplier-po-delivery/diagram-3.light.svg" alt="핵심 설계 결정 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/supplier-po-delivery/diagram-3.dark.svg" alt="핵심 설계 결정 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
 ### 1. 주문라인 1:1 분할출고 매칭 — 출고 할당기
 

@@ -11,6 +11,7 @@ cover: null
 notionEditedAt: "2026-08-31"
 description: null
 glance: {"headline":"부분 반품을 몇 번 나눠도 환불 합계 = 원결제액 — 금액 배분 불변식 4개를 1만 회씩 검증했다","problem":["할인 · 쿠폰 · 포인트가 섞인 주문을 여러 번 나눠 반품하면 단가 × 수량 방식은 반올림 오차가 쌓인다. 실결제 33,333원인 상품 10개를 3 · 3 · 4개로 나눠 반품하면 합계가 1원 어긋난다.","반품 때 원 발주를 직접 고치면 공급사 정산 근거가 사라지고, 만료된 포인트를 되살리거나 동시에 두 번 복원할 위험도 있다."],"solution":["매 회차를 '남은 금액 ÷ 남은 수량' 기준으로 나누고(10원 단위 내림) 마지막 회차가 끝수를 흡수한다. 배분한 값은 저장해 환불 · 포인트 환수에 그대로 쓴다.","원 발주는 두고 음수 발주를 따로 만들어 정산 순액을 맞추고, 포인트는 최근 사용분부터 되돌리되 만료분은 손실로 따로 남긴다."],"result":["불변식 4개(합계 일치 · 잔여 음수 불가 · 10원 단위 · 소액 차원)를 각 1만 케이스 property 테스트로 검증해 10/10 통과. 기각한 대안(매번 원본 기준 재계산)은 같은 테스트의 5번째 시도에서 반례가 나왔다.","테스트를 짜다 실제 결함 3건(분할 이중 집계 · 전량 교환 후 0원 배분 · 반려 · 철회분 혼입)을 찾아 고쳤다. 동시 환수 20건 로컬 실측에서 이중 복원 0건."]}
+leadFigure: {"light":"/content-assets/b2b/claims/diagram-5.light.svg","dark":"/content-assets/b2b/claims/diagram-5.dark.svg","alt":"1. 부분 클레임 금액 배분 — 잔여 비례 + 마지막 흡수 다이어그램"}
 ---
 
 ## 개요
@@ -150,6 +151,8 @@ B2B 클레임은 단순 환불이 아니다 — **부분 출고·여러 공급�
 ## 핵심 설계 결정
 
 ### 1. 부분 클레임 금액 배분 — 잔여 비례 + 마지막 흡수
+
+<figure class="diagram"><img src="/content-assets/b2b/claims/diagram-5.light.svg" alt="1. 부분 클레임 금액 배분 — 잔여 비례 + 마지막 흡수 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/claims/diagram-5.dark.svg" alt="1. 부분 클레임 금액 배분 — 잔여 비례 + 마지막 흡수 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
 <aside class="callout tone-orange" data-icon="🎯">
 

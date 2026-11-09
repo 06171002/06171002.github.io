@@ -1,0 +1,13 @@
+flowchart TB
+    subgraph judge["① 2축 판정"]
+        direction LR
+        own{"표준품목 소유자"} -->|"운영사"| ag["대행"]
+        own -->|"고객사"| conn{"그 고객사와<br/>나의 연결"}
+        conn -->|"있음"| dt["직거래"]
+        conn -->|"없음"| bl["차단 · 주문 불가<br/>대행 폴백 없음"]
+    end
+    subgraph guard["② 트랙 순도 2단 가드"]
+        direction LR
+        g1["장바구니 선택 시<br/>대행 + 직거래 혼합 거부"] --> g2["주문 생성 시 다시 판정<br/>주문 헤더에 직거래 스냅샷"]
+    end
+    judge --> guard

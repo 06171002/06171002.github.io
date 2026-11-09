@@ -73,20 +73,24 @@ interface Glance {
     problem: string[];
     solution: string[];
     result: string[];
-    /** 본문 다이어그램 가운데 '한눈에' 에도 올릴 그림 */
-    figure?: { light: string; dark: string; alt: string };
+}
+
+/** '한눈에' 에 올리는 그림 — 본문 다이어그램 가운데 하나 (라이트 · 다크 두 벌 주소와 alt) */
+interface LeadFigure {
+    light: string;
+    dark: string;
+    alt: string;
 }
 
 /**
- * 공개용 사본의 '성과 제목' · '문제' · '해결' · '결과' · '대표 그림' 속성 → '한눈에'.
+ * 공개용 사본의 '성과 제목' · '문제' · '해결' · '결과' 속성 → '한눈에' 문장.
  * 네 칸이 모두 비면 대표 사례가 아닌 카드다(null). 일부만 차 있으면 실패시킨다 — 반쪽 요약을 조용히 내보내지 않는다
  */
-function glanceOf(properties: Properties, redact: Redactor, diagrams: DiagramRequest[]): Glance | null {
+function glanceOf(properties: Properties, redact: Redactor): Glance | null {
     const headline = redact(textProp(properties, '성과 제목')).replace(/\s+/g, ' ').trim();
     const problem = linesProp(properties, '문제', redact);
     const solution = linesProp(properties, '해결', redact);
     const result = linesProp(properties, '결과', redact);
-    const figureNo = numberProp(properties, '대표 그림');
     const counts: [string, number][] = [
         ['성과 제목', headline.length],
         ['문제', problem.length],
@@ -94,24 +98,27 @@ function glanceOf(properties: Properties, redact: Redactor, diagrams: DiagramReq
         ['결과', result.length],
     ];
     const empty = counts.filter(([, count]) => count === 0).map(([name]) => name);
-    if (empty.length === counts.length) {
-        if (figureNo !== null) throw new Error(`'대표 그림' 만 있고 성과 제목 · 문제 · 해결 · 결과가 비어 있습니다`);
-        return null;
-    }
+    if (empty.length === counts.length) return null;
     if (empty.length > 0) {
         throw new Error(
             `'한눈에' 속성이 일부만 찼습니다 (빈 칸: ${empty.join(' · ')}) — 성과 제목 · 문제 · 해결 · 결과를 모두 채우거나 모두 비우세요`
         );
     }
-    const glance: Glance = { headline, problem, solution, result };
-    if (figureNo !== null) {
-        const diagram = Number.isInteger(figureNo) ? diagrams[figureNo - 1] : undefined;
-        if (!diagram) {
-            throw new Error(`'대표 그림' ${figureNo} — 본문 다이어그램은 ${diagrams.length}개입니다 (첫 그림이 1)`);
-        }
-        glance.figure = { light: diagram.light, dark: diagram.dark, alt: diagram.alt };
+    return { headline, problem, solution, result };
+}
+
+/**
+ * 공개용 사본의 '대표 그림' 속성(본문 다이어그램 번호, 첫 그림이 1) → '한눈에' 에 올릴 그림.
+ * 대표 사례가 아닌 카드도 가질 수 있다. 비우면 null, 범위 밖이면 실패
+ */
+function leadFigureOf(properties: Properties, diagrams: DiagramRequest[]): LeadFigure | null {
+    const figureNo = numberProp(properties, '대표 그림');
+    if (figureNo === null) return null;
+    const diagram = Number.isInteger(figureNo) ? diagrams[figureNo - 1] : undefined;
+    if (!diagram) {
+        throw new Error(`'대표 그림' ${figureNo} — 본문 다이어그램은 ${diagrams.length}개입니다 (첫 그림이 1)`);
     }
-    return glance;
+    return { light: diagram.light, dark: diagram.dark, alt: diagram.alt };
 }
 
 interface Cover {
@@ -156,7 +163,8 @@ function featureFrontmatter(
         .split(/[·,]/)
         .map((keyword) => keyword.trim())
         .filter(Boolean);
-    const glance = glanceOf(properties, redact, diagrams);
+    const glance = glanceOf(properties, redact);
+    const leadFigure = leadFigureOf(properties, diagrams);
     return {
         title: redact(titleProp(properties)).trim(),
         slug: entry.slug,
@@ -175,6 +183,8 @@ function featureFrontmatter(
         description: redact(textProp(properties, '요약')).trim() || null,
         // 대표 사례만 갖는다. 없으면 키를 쓰지 않는다 — 나머지 카드의 파일은 이 기능 전과 같다
         ...(glance ? { glance } : {}),
+        // '한눈에' 에 올리는 그림 — 대표 사례가 아니어도 둘 수 있다. 없으면 키를 쓰지 않는다
+        ...(leadFigure ? { leadFigure } : {}),
     };
 }
 

@@ -19,17 +19,18 @@ const features = defineCollection({
         notionEditedAt: z.coerce.date(),
         // 사본의 '요약' 속성 — 비어 있으면 상세 페이지가 성과 제목 → 개요 첫 문단으로 설명을 만든다
         description: z.string().nullable().optional(),
-        // 대표 사례만 갖는 '한눈에' — 사본의 '성과 제목' · '문제' · '해결' · '결과' · '대표 그림' 속성 (docs/design.md 5.3)
+        // 대표 사례만 갖는 '한눈에' 문장 — 사본의 '성과 제목' · '문제' · '해결' · '결과' 속성 (docs/design.md 5.3)
         glance: z
             .object({
                 headline: z.string().min(1),
                 problem: z.array(z.string().min(1)).min(1),
                 solution: z.array(z.string().min(1)).min(1),
                 result: z.array(z.string().min(1)).min(1),
-                figure: z.object({ light: z.string(), dark: z.string(), alt: z.string() }).optional(),
             })
             .nullable()
             .optional(),
+        // '한눈에' 에 올리는 그림 — 사본의 '대표 그림' 속성이 가리키는 본문 다이어그램. 문장이 없는 카드도 가질 수 있다
+        leadFigure: z.object({ light: z.string(), dark: z.string(), alt: z.string() }).nullable().optional(),
     }),
 });
 

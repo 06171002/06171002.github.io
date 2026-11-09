@@ -11,6 +11,7 @@ cover: null
 notionEditedAt: "2026-08-31"
 description: null
 glance: {"headline":"장바구니 갱신의 병목이 쿼리가 아니라 커넥션 풀임을 측정으로 밝혔다 — 풀 크기만 바꿔 처리량 2.44배","problem":["B2B 장바구니는 기업별 계약가 · 재고 · 행사를 매번 반영해야 하고, 장바구니에서 본 가격이 그대로 주문 가격이 돼야 한다.","상품마다 조회하면 왕복이 상품 수만큼 늘어난다 — 장바구니 20개 기준 167회 · p50 395ms, 묶어서 짜도 30회 · p50 77ms."],"solution":["DB 프로시저가 장바구니 전체를 한 번에 갱신해 스냅샷 컬럼에 저장하고, 주문은 그 값을 쓰되 주문 시점에 가격을 다시 확인해 바뀌었으면 막는다.","부하 중 커넥션 풀 · MySQL CPU 지표를 함께 모으고 리틀의 법칙으로 교차 검증해 병목 위치를 찾았다."],"result":["왕복 30 → 4회 · p50 77 → 20ms(장바구니 20개). 최대 100 VU 램프 부하 24,043건에서 실패율 0%.","100 VU 에서 풀은 20/20 포화 · 대기 75 인데 MySQL CPU 는 1.3%였다. 풀 크기만 5 → 20 으로 바꾼 A/B 에서 처리량 115.1 → 280.5 req/s(2.44배), p95 813.3 → 291.3ms."]}
+leadFigure: {"light":"/content-assets/b2b/cart/diagram-2.light.svg","dark":"/content-assets/b2b/cart/diagram-2.dark.svg","alt":"병목은 프로시저가 아니라 커넥션 풀이었다 다이어그램"}
 ---
 
 ## 개요
@@ -353,6 +354,8 @@ END LOOP
 > 장바구니 20개의 가격·기업계약가·재고를 <strong>1회 CALL 로 갱신하는 데 p95 78ms.</strong>
 
 ### 병목은 프로시저가 아니라 커넥션 풀이었다
+
+<figure class="diagram"><img src="/content-assets/b2b/cart/diagram-2.light.svg" alt="병목은 프로시저가 아니라 커넥션 풀이었다 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/b2b/cart/diagram-2.dark.svg" alt="병목은 프로시저가 아니라 커넥션 풀이었다 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
 부하 구간의 서버측 지표가 병목 위치를 특정했다. 서버측 지표는 같은 빌드 · 같은 부하로 바로 앞에 돌린 회차에서 쟀다 — 그 회차는 처리량 139 req/s · p50 160ms 로 위 실측 결과 회차(146 req/s · p50 161ms)와 거의 같았다.
 
