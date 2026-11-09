@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import EvidenceBadges from '../components/EvidenceBadges.astro';
+import GlanceRows from '../components/GlanceRows.astro';
 import Base from '../layouts/Base.astro';
 import { highlights } from '../data/highlights';
 import { profile } from '../data/profile';
@@ -11,8 +12,13 @@ import { skills } from '../data/skills';
 const entries = await getCollection('features');
 const cardsOf = (key: string) =>
     entries.filter((entry) => entry.data.project === key).sort((a, b) => a.data.order - b.data.order);
-const hasCard = (project: string, slug: string) =>
-    entries.some((entry) => entry.data.project === project && entry.id === slug);
+// 대표 사례 — 카드에 '한눈에'(노션 공개용 사본의 성과 제목 · 문제 · 해결 · 결과)가 있으면 그것을 싣고,
+// 없으면 대표 수치(값 · 한 줄 설명)로 둔다. 큰 숫자 · 근거 배지 · 순서는 src/data/highlights.ts (docs/design.md 5.1)
+const cases = highlights.map((item) => {
+    const entry = entries.find((card) => card.data.project === item.project && card.id === item.slug);
+    return { item, href: entry ? `/${item.project}/${item.slug}/` : null, glance: entry?.data.glance ?? null };
+});
+const showcase = cases.some((entry) => entry.glance);
 // 검색 엔진용 인물 정보 (docs/design.md 10장)
 const person = {
     '@context': 'https://schema.org',
@@ -45,21 +51,40 @@ const person = {
 
         <section aria-labelledby="highlights-title">
             <h2 id="highlights-title" class="section-label">
-                대표 수치
+                {showcase ? '대표 사례' : '대표 수치'}
             </h2>
-            <ul class="metrics">
-                {highlights.map((item) => (
-                    <li class="metric">
-                        <p class="metric-value">{item.value}</p>
-                        <p class="metric-label">{item.label}</p>
-                        <EvidenceBadges kinds={[item.evidence]} env={item.env} />
-                        {hasCard(item.project, item.slug) && (
-                            <a class="metric-link" href={`/${item.project}/${item.slug}/`}>
-                                {item.cardTitle} →
-                            </a>
-                        )}
-                    </li>
-                ))}
+            <ul class:list={['metrics', { cases: showcase }]}>
+                {cases.map(({ item, href, glance }) =>
+                    glance ? (
+                        <li class="metric case">
+                            <p class="metric-value">{item.value}</p>
+                            <h3 class="case-headline">{glance.headline}</h3>
+                            <EvidenceBadges kinds={[item.evidence]} env={item.env} />
+                            <GlanceRows
+                                problem={glance.problem}
+                                solution={glance.solution}
+                                result={glance.result}
+                                compact
+                            />
+                            {href && (
+                                <a class="metric-link" href={href}>
+                                    {item.cardTitle} 자세히 →
+                                </a>
+                            )}
+                        </li>
+                    ) : (
+                        <li class="metric">
+                            <p class="metric-value">{item.value}</p>
+                            <p class="metric-label">{item.label}</p>
+                            <EvidenceBadges kinds={[item.evidence]} env={item.env} />
+                            {href && (
+                                <a class="metric-link" href={href}>
+                                    {item.cardTitle} →
+                                </a>
+                            )}
+                        </li>
+                    )
+                )}
             </ul>
         </section>
 
@@ -179,6 +204,22 @@ const person = {
         color: var(--muted);
         font-size: var(--text-sm);
         line-height: 1.55;
+    }
+
+    /* 대표 사례: 큰 숫자 · 성과 제목 · 문제 · 해결 · 결과 첫 줄 — 넓으면 2열, 좁으면 1열 */
+    .metrics.cases {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
+    }
+
+    .case {
+        gap: 0.625rem;
+        padding: 1.25rem 1.375rem;
+    }
+
+    .case-headline {
+        margin: 0;
+        font-size: 1.0625rem;
+        line-height: 1.5;
     }
 
     .metric-link {

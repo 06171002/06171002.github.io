@@ -3,6 +3,7 @@ import type { InferGetStaticPropsType } from 'astro';
 import { getCollection, render } from 'astro:content';
 import CardRefs from '../../components/CardRefs.astro';
 import EvidenceBadges from '../../components/EvidenceBadges.astro';
+import GlanceRows from '../../components/GlanceRows.astro';
 import Base from '../../layouts/Base.astro';
 import { projects } from '../../data/projects';
 import { describe } from '../../lib/describe';
@@ -46,9 +47,14 @@ const basis = new Intl.DateTimeFormat('ko-KR', { dateStyle: 'long', timeZone: 'A
     data.notionEditedAt
 );
 const meta = [data.domain, `${basis} 기준`].filter(Boolean);
-// 검색 · 공유 설명: 사본의 '요약' 속성 → 개요 첫 문단 → 제목 + 키워드
+// 대표 사례만 갖는 '한눈에' — 성과 제목 + (그림) + 문제 · 해결 · 결과 (docs/design.md 5.3)
+const glance = data.glance ?? null;
+// 검색 · 공유 설명: 사본의 '요약' 속성 → 성과 제목 → 개요 첫 문단 → 제목 + 키워드
 const description =
-    data.description ?? describe(entry.body ?? '') ?? `${data.title} — ${project.name}. ${data.keywords.join(' · ')}`;
+    data.description ??
+    glance?.headline ??
+    describe(entry.body ?? '') ??
+    `${data.title} — ${project.name}. ${data.keywords.join(' · ')}`;
 ---
 
 <Base
@@ -77,6 +83,33 @@ const description =
                     </ul>
                 )}
             </header>
+
+            {glance && (
+                <section class="glance" aria-labelledby="glance-title">
+                    <h2 id="glance-title" class="glance-label">
+                        한눈에
+                    </h2>
+                    <p class="glance-headline">{glance.headline}</p>
+                    {/* 첫 화면에 있는 그림이라 지연 로딩하지 않는다 */}
+                    {glance.figure && (
+                        <figure class="diagram glance-figure">
+                            <img
+                                src={glance.figure.light}
+                                alt={glance.figure.alt}
+                                class="diagram-light"
+                                decoding="async"
+                            />
+                            <img
+                                src={glance.figure.dark}
+                                alt={glance.figure.alt}
+                                class="diagram-dark"
+                                decoding="async"
+                            />
+                        </figure>
+                    )}
+                    <GlanceRows problem={glance.problem} solution={glance.solution} result={glance.result} />
+                </section>
+            )}
 
             {toc.length > 1 && (
                 <details class="toc-mobile toc">

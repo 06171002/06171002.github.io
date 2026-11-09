@@ -25,6 +25,8 @@ const bodyKeywords = data.keywords.slice(2, 5);
                 {data.title}
                 {data.draft && <span class="draft-tag">초안</span>}
             </h3>
+            {/* 대표 사례 카드만 성과 제목이 있다 — 목록에서 무게가 드러나게 */}
+            {data.glance && <p class="feature-headline">{data.glance.headline}</p>}
             <EvidenceBadges kinds={data.evidence} />
             {bodyKeywords.length > 0 && <p class="feature-keywords">{bodyKeywords.join(' · ')}</p>}
         </div>
@@ -98,6 +100,12 @@ const bodyKeywords = data.keywords.slice(2, 5);
         margin: 0;
         font-size: 1.0625rem;
         line-height: 1.4;
+    }
+
+    .feature-headline {
+        margin: 0;
+        font-size: var(--text-sm);
+        line-height: 1.55;
     }
 
     .feature-keywords {

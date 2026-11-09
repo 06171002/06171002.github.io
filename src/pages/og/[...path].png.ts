@@ -43,6 +43,7 @@ export const getStaticPaths = (async () => {
                     eyebrow: [project.name, entry.data.domain].filter(Boolean).join(' · '),
                     title: entry.data.title,
                     keywords: entry.data.keywords.slice(0, 4),
+                    headline: entry.data.glance?.headline,
                     tone: entry.data.project,
                 },
             },

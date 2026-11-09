@@ -10,6 +10,7 @@ import type { Browser } from 'puppeteer';
 import { features } from '../../sync.config.ts';
 import type { FeatureEntry } from '../../sync.config.ts';
 import { convertPage } from './convert.ts';
+import type { DiagramRequest } from './convert.ts';
 import { openBrowser, renderDiagram } from './diagrams.ts';
 import { readPrivateEnv, repoRoot } from './env.ts';
 import { scan, summarize } from './guard.ts';
@@ -53,6 +54,66 @@ function dateProp(properties: Properties, name: string): string | null {
     return value?.type === 'date' ? (value.date?.start ?? null) : null;
 }
 
+function numberProp(properties: Properties, name: string): number | null {
+    const value = properties[name];
+    return value?.type === 'number' ? value.number : null;
+}
+
+/** 한 줄에 한 항목 — 노션 텍스트 속성 안의 줄바꿈으로 나눈다 */
+function linesProp(properties: Properties, name: string, redact: Redactor): string[] {
+    return redact(textProp(properties, name))
+        .split(/\r?\n/)
+        .map((line) => line.replace(/\s+/g, ' ').trim())
+        .filter(Boolean);
+}
+
+/** 대표 사례 카드 맨 위의 '한눈에' — 성과 제목 한 줄 + 문제 · 해결 · 결과 (docs/design.md 5.3 · 7장) */
+interface Glance {
+    headline: string;
+    problem: string[];
+    solution: string[];
+    result: string[];
+    /** 본문 다이어그램 가운데 '한눈에' 에도 올릴 그림 */
+    figure?: { light: string; dark: string; alt: string };
+}
+
+/**
+ * 공개용 사본의 '성과 제목' · '문제' · '해결' · '결과' · '대표 그림' 속성 → '한눈에'.
+ * 네 칸이 모두 비면 대표 사례가 아닌 카드다(null). 일부만 차 있으면 실패시킨다 — 반쪽 요약을 조용히 내보내지 않는다
+ */
+function glanceOf(properties: Properties, redact: Redactor, diagrams: DiagramRequest[]): Glance | null {
+    const headline = redact(textProp(properties, '성과 제목')).replace(/\s+/g, ' ').trim();
+    const problem = linesProp(properties, '문제', redact);
+    const solution = linesProp(properties, '해결', redact);
+    const result = linesProp(properties, '결과', redact);
+    const figureNo = numberProp(properties, '대표 그림');
+    const counts: [string, number][] = [
+        ['성과 제목', headline.length],
+        ['문제', problem.length],
+        ['해결', solution.length],
+        ['결과', result.length],
+    ];
+    const empty = counts.filter(([, count]) => count === 0).map(([name]) => name);
+    if (empty.length === counts.length) {
+        if (figureNo !== null) throw new Error(`'대표 그림' 만 있고 성과 제목 · 문제 · 해결 · 결과가 비어 있습니다`);
+        return null;
+    }
+    if (empty.length > 0) {
+        throw new Error(
+            `'한눈에' 속성이 일부만 찼습니다 (빈 칸: ${empty.join(' · ')}) — 성과 제목 · 문제 · 해결 · 결과를 모두 채우거나 모두 비우세요`
+        );
+    }
+    const glance: Glance = { headline, problem, solution, result };
+    if (figureNo !== null) {
+        const diagram = Number.isInteger(figureNo) ? diagrams[figureNo - 1] : undefined;
+        if (!diagram) {
+            throw new Error(`'대표 그림' ${figureNo} — 본문 다이어그램은 ${diagrams.length}개입니다 (첫 그림이 1)`);
+        }
+        glance.figure = { light: diagram.light, dark: diagram.dark, alt: diagram.alt };
+    }
+    return glance;
+}
+
 interface Cover {
     ext: string;
     bytes: Buffer;
@@ -87,13 +148,15 @@ function featureFrontmatter(
     entry: FeatureEntry,
     page: PageObjectResponse,
     redact: Redactor,
-    cover: string | null
+    cover: string | null,
+    diagrams: DiagramRequest[]
 ): Record<string, unknown> {
     const properties = page.properties;
     const keywords = redact(textProp(properties, '핵심 키워드'))
         .split(/[·,]/)
         .map((keyword) => keyword.trim())
         .filter(Boolean);
+    const glance = glanceOf(properties, redact, diagrams);
     return {
         title: redact(titleProp(properties)).trim(),
         slug: entry.slug,
@@ -110,6 +173,8 @@ function featureFrontmatter(
         notionEditedAt: dateProp(properties, '기준일') ?? page.last_edited_time,
         // 검색 · 공유 설명 — 비어 있으면 사이트가 본문 개요의 첫 문단으로 만든다
         description: redact(textProp(properties, '요약')).trim() || null,
+        // 대표 사례만 갖는다. 없으면 키를 쓰지 않는다 — 나머지 카드의 파일은 이 기능 전과 같다
+        ...(glance ? { glance } : {}),
     };
 }
 
@@ -162,7 +227,8 @@ async function main(): Promise<void> {
         const result = convertPage(blocks, { redact, resolvePage, assetsBase: dirs.assetsUrl });
         const cover = await downloadCover(page);
         const coverUrl = cover ? `${dirs.assetsUrl}/cover.${cover.ext}` : null;
-        const markdown = frontmatter(featureFrontmatter(entry, page, redact, coverUrl)) + serialize(result.root);
+        const markdown =
+            frontmatter(featureFrontmatter(entry, page, redact, coverUrl, result.diagrams)) + serialize(result.root);
 
         const hits = [
             ...scan(markdown, denylist),

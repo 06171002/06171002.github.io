@@ -104,6 +104,41 @@
     margin-bottom: 0.625rem;
 }
 
+/* ---------- 한눈에: 대표 사례의 성과 제목 + 문제 · 해결 · 결과 (docs/design.md 5.3) ---------- */
+.glance {
+    margin: 1.25rem 0 0;
+    padding: 1rem 1.25rem 1.125rem;
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+}
+
+.glance-label {
+    margin: 0 0 0.25rem;
+    color: var(--muted);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+.glance-headline {
+    margin: 0 0 0.875rem;
+    font-size: 1.1875rem;
+    font-weight: 700;
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+}
+
+figure.glance-figure {
+    margin: 0 0 1rem;
+}
+
+/* 세로로 긴 흐름도도 요약 상자를 다 차지하지 않게 높이를 묶는다 (가로세로 비율은 유지) */
+figure.glance-figure img {
+    max-height: 24rem;
+}
+
 /* ---------- 목차 ---------- */
 .toc-title {
     margin: 0 0 0.5rem;
@@ -607,13 +642,15 @@ mark[class^='bg-'] {
         break-after: avoid;
     }
 
+    .glance,
     .callout,
     figure.diagram,
     .table-wrap tr {
         break-inside: avoid;
     }
 
-    /* 콜아웃 · 배지 · 표 머리의 옅은 바탕색은 구조를 알려 주므로 종이에도 남긴다 */
+    /* 한눈에 · 콜아웃 · 배지 · 표 머리의 옅은 바탕색은 구조를 알려 주므로 종이에도 남긴다 */
+    .glance,
     .callout,
     .badge,
     mark,

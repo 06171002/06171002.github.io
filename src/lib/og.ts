@@ -10,7 +10,15 @@ export const OG_HEIGHT = 630;
 export type OgInput =
     | { kind: 'home'; eyebrow: string; name: string; tagline: string }
     | { kind: 'project'; eyebrow: string; name: string; summary: string; tone: Tone }
-    | { kind: 'card'; eyebrow: string; title: string; keywords: string[]; tone: Tone };
+    | {
+          kind: 'card';
+          eyebrow: string;
+          title: string;
+          keywords: string[];
+          /** 대표 사례의 성과 제목 — 있으면 키워드 대신 그린다 */
+          headline?: string | undefined;
+          tone: Tone;
+      };
 
 export type Tone = 'b2b' | 'stt' | 'accent';
 
@@ -28,6 +36,8 @@ const COLOR = {
 const SITE = '06171002.github.io';
 const PAD_X = 96;
 const TEXT_WIDTH = OG_WIDTH - PAD_X * 2;
+/** 본문 글자의 마지막 기준선 — 아래 구분선(OG_HEIGHT - 112)과 글자 밑이 닿지 않는 자리 */
+const LAST_BASELINE = OG_HEIGHT - 140;
 
 const require = createRequire(join(process.cwd(), 'package.json'));
 const fontFiles = ['Bold', 'SemiBold', 'Medium'].map((weight) =>
@@ -60,19 +70,26 @@ function svgOf(input: OgInput): string {
     } else {
         y += 100;
         y = block(parts, input.title, { y, size: 66, weight: 700, fill: COLOR.fg, lineHeight: 84, maxLines: 3 });
-        // 키워드 하나가 두 줄로 갈라지지 않게 키워드 단위로 줄을 바꾼다
-        block(
-            parts,
-            { tokens: input.keywords, joiner: ' · ' },
-            {
-                y,
-                size: 32,
-                weight: 500,
-                fill: COLOR.muted,
-                lineHeight: 48,
-                maxLines: 2,
-            }
-        );
+        if (input.headline) {
+            // 대표 사례는 키워드 대신 성과 제목 — 아래 구분선 위에 들어가는 줄 수만큼 (최대 3줄)
+            const lineHeight = 50;
+            const maxLines = Math.max(1, Math.min(3, Math.floor((LAST_BASELINE - y) / lineHeight) + 1));
+            block(parts, input.headline, { y, size: 36, weight: 600, fill: COLOR.fg, lineHeight, maxLines });
+        } else {
+            // 키워드 하나가 두 줄로 갈라지지 않게 키워드 단위로 줄을 바꾼다
+            block(
+                parts,
+                { tokens: input.keywords, joiner: ' · ' },
+                {
+                    y,
+                    size: 32,
+                    weight: 500,
+                    fill: COLOR.muted,
+                    lineHeight: 48,
+                    maxLines: 2,
+                }
+            );
+        }
     }
 
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${OG_WIDTH}" height="${OG_HEIGHT}" viewBox="0 0 ${OG_WIDTH} ${OG_HEIGHT}">
