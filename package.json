@@ -19,6 +19,7 @@
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "sync": "node scripts/sync/index.ts",
+        "guard": "node scripts/guard.ts",
         "astro": "astro"
     },
     "dependencies": {

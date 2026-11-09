@@ -5,31 +5,97 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# 배포 권한(pages · id-token)은 deploy 잡에만 준다 — 빌드 잡이 가드를 건너뛰고 직접 배포할 수 없게
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
+  # 설치 → pnpm build(astro check + astro build) → dist 를 Pages 아티팩트로 업로드.
+  # withastro/action@v6 을 풀어 쓴 것이다(빌드와 배포 사이에 2차 가드를 넣으려고). 고정한 액션 버전도 그 액션과 같다
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
-      # pnpm 설치 → pnpm run build(astro check + astro build) → dist 를 Pages 아티팩트로 업로드
-      - name: Install, build, and upload
-        uses: withastro/action@v6
+      # 버전은 package.json 의 packageManager (pnpm@10.33.0)
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.22.0
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore Astro cache
+        id: astro-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: node_modules/.astro
+          key: astro-cache-${{ runner.os }}-${{ github.sha }}
+          restore-keys: astro-cache-${{ runner.os }}-
+
+      - name: Build
+        run: pnpm build
+
+      - name: Save Astro cache
+        if: steps.astro-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: node_modules/.astro
+          key: ${{ steps.astro-cache.outputs.cache-primary-key }}
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: dist/
+          include-hidden-files: true
+
+  # 2차 가드 (docs/design.md 6.6): 배포할 아티팩트를 그대로 풀어 공개 규칙 · 비공개 금지어로 검사한다. 걸리면 deploy 가 돌지 않는다.
+  # 금지어 시크릿은 이 잡에만 준다 — npm 패키지 코드가 도는 build 잡과 러너를 나눈다. 가드는 의존성 없이 Node 만으로 돈다
+  guard:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24.22.0
 
+      - name: Download Pages artifact
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: github-pages
+          path: ${{ runner.temp }}/pages
+
+      - name: Extract
+        run: |
+          mkdir -p "$RUNNER_TEMP/site"
+          tar -xf "$RUNNER_TEMP/pages/artifact.tar" -C "$RUNNER_TEMP/site"
+
+      - name: Guard
+        env:
+          PORTFOLIO_DENYLIST: ${{ secrets.PORTFOLIO_DENYLIST }}
+        run: node scripts/guard.ts "$RUNNER_TEMP/site"
+
   deploy:
-    needs: build
+    needs: guard
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
