@@ -1,0 +1,23 @@
+---
+// 카드 본문(<Content />)을 렌더한 HTML 에서 「카드 제목」 참조를 그 카드 링크로 바꿔 내보낸다 (src/lib/card-refs.ts)
+// 잇지 못한 참조는 빌드 로그에 경고로 남긴다 — 노션 공개용 사본에서 고칠 후보다
+import { linkCardRefs, type CardTarget } from '../lib/card-refs';
+
+interface Props {
+    cards: CardTarget[];
+    /** 이 카드의 주소 — 자기 자신은 잇지 않는다 */
+    self: string;
+}
+
+const { cards, self } = Astro.props;
+const { html, unlinked } = linkCardRefs(await Astro.slots.render('default'), cards, self);
+if (unlinked.length > 0) {
+    const lines = unlinked.map(
+        (ref) => `  ⚠ 카드 참조 ${self} 「${ref.text}」${ref.count > 1 ? ` ×${ref.count}` : ''} — ${ref.reason}`
+    );
+    // 빌드 로그는 경로를 찍고 렌더가 끝난 뒤 걸린 시간을 붙인다 — 그 사이에 끼므로 줄을 바꿔 시작한다
+    console.warn(`\n${lines.join('\n')}`);
+}
+---
+
+<Fragment set:html={html} />

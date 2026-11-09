@@ -1,6 +1,7 @@
 ---
 import type { InferGetStaticPropsType } from 'astro';
 import { getCollection, render } from 'astro:content';
+import CardRefs from '../../components/CardRefs.astro';
 import EvidenceBadges from '../../components/EvidenceBadges.astro';
 import Base from '../../layouts/Base.astro';
 import { projects } from '../../data/projects';
@@ -9,6 +10,9 @@ import '../../styles/content.css';
 
 export async function getStaticPaths() {
     const entries = await getCollection('features');
+    const href = (entry: (typeof entries)[number]) => `/${entry.data.project}/${entry.id}/`;
+    // 본문의 「카드 제목」 참조가 가리킬 수 있는 카드 — 초안 · 자기 자신은 CardRefs 가 거른다
+    const cards = entries.map((entry) => ({ title: entry.data.title, href: href(entry), draft: entry.data.draft }));
     return entries.map((entry) => {
         // 같은 프로젝트 안에서 노션 순서대로 이전 · 다음
         const siblings = entries
@@ -16,17 +20,23 @@ export async function getStaticPaths() {
             .sort((a, b) => a.data.order - b.data.order);
         const index = siblings.findIndex((other) => other.id === entry.id);
         const link = (other: (typeof siblings)[number] | undefined) =>
-            other ? { href: `/${other.data.project}/${other.id}/`, title: other.data.title } : null;
+            other ? { href: href(other), title: other.data.title } : null;
         return {
             params: { project: entry.data.project, slug: entry.id },
-            props: { entry, prev: link(siblings[index - 1]), next: link(siblings[index + 1]) },
+            props: {
+                entry,
+                prev: link(siblings[index - 1]),
+                next: link(siblings[index + 1]),
+                cards,
+                self: href(entry),
+            },
         };
     });
 }
 
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 
-const { entry, prev, next } = Astro.props as Props;
+const { entry, prev, next, cards, self } = Astro.props as Props;
 const { Content, headings } = await render(entry);
 const data = entry.data;
 const project = projects[data.project];
@@ -82,7 +92,9 @@ const description =
             )}
 
             <div class="prose">
-                <Content />
+                <CardRefs cards={cards} self={self}>
+                    <Content />
+                </CardRefs>
             </div>
 
             {(prev || next) && (
