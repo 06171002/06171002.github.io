@@ -22,7 +22,7 @@ description: null
 
 <div class="table-wrap">
 
-| **Celery 동시성 4** | **동기↔async 브리지** | **NullPool** | **구조화 JSON 로깅** | **헬스체크 4점검**     |
+| **Celery 동시성 2** | **동기↔async 브리지** | **NullPool** | **구조화 JSON 로깅** | **헬스체크 4점검**     |
 | ---------------- | ---------------- | ------------ | --------------- | ---------------- |
 | Redis broker     | `asyncio.run`    | 멀티프로세스 안전    | 운영=JSON / 개발=컬러 | DB·Redis·STT·LLM |
 
@@ -218,7 +218,7 @@ if LLM 을 뺀 항목 중 하나라도 ok 가 아니면:
 
 | **항목**         | **값**                                           |
 | -------------- | ----------------------------------------------- |
-| Celery 동시성     | 4                                               |
+| Celery 동시성     | 2                                               |
 | 방 요약 재시도       | 최대 5회                                           |
 | STT 스트림 워커     | 3                                               |
 | DB 커넥션         | FastAPI 풀 (기본 3 + overflow 5) / Celery NullPool |
