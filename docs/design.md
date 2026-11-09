@@ -157,7 +157,7 @@ scripts/sync/
 git diff 로 변경분 검토 → 커밋 → push
   │
   ▼
-GitHub Actions: 2차 가드(시크릿 금지어) → astro check → astro build → Pages 배포
+GitHub Actions: build(astro check → astro build → Pages 아티팩트) → guard(아티팩트를 풀어 2차 가드: 공개 규칙 + 시크릿 금지어) → deploy(Pages)
 ```
 
 ### 6.1 왜 "로컬 동기화 + 커밋" 인가
@@ -190,7 +190,7 @@ GitHub Actions: 2차 가드(시크릿 금지어) → astro check → astro build
 | 열 레이아웃 | 1장 · 4개 | `<div class="columns">` > `<div class="column">`. CSS grid, 좁으면 1열 |
 | 색 글자 | 2장 · 47개 | `tc-{색}` · `bg-{색}` 클래스. 흰 바탕 대비 4.5:1 이상으로 조정한 팔레트 |
 | 페이지 멘션 | 1건 | 내부 링크 (노션 ID → slug) |
-| 「카드 제목」 텍스트 참조 | 약 11곳 | 카드 제목과 정확히 일치하면 내부 링크로 자동 연결 (M3) |
+| 「카드 제목」 텍스트 참조 | 카드 참조 9곳 (「」 36곳 중) | 동기화가 아니라 렌더 때 연결한다(`src/lib/card-refs.ts` · `src/components/CardRefs.astro`). 「」 안 글자가 공개 카드 제목과 정확히 같을 때만 링크하고, 초안 · 자기 자신은 빼고, 코드 · 링크 · 제목 · 토글 제목 안은 건너뛴다. 링크하지 못한 카드 참조는 빌드 로그에 경고로 남긴다 (2026-11-09) |
 | 빈 블록 | 43개 | 제거 |
 | 페이지 커버 | 16개 | 내려받아 저장은 하지만 화면에는 쓰지 않는다 (5.2 — HTML 커버) |
 
@@ -233,6 +233,7 @@ GitHub Actions: 2차 가드(시크릿 금지어) → astro check → astro build
 
 **가드 검사 대상**: 생성된 Markdown(프런트매터 포함), Mermaid 원문과 SVG(텍스트가 들어 있다), 커버 SVG.
 PNG 커버는 글자를 검사할 수 없으므로 눈으로 확인한다.
+2차 가드(CI)는 배포 아티팩트 전체를 본다: 페이지 · SVG 의 읽는 글자에 공개 규칙 + 금지어, 원문(주소 · 속성 · 스크립트 · 스타일)에 금지어, 그 밖의 텍스트 파일은 금지어만. 이미지 · 글꼴은 빼고, 모르는 형식은 실패로 막는다 (6.6).
 
 ### 6.6 비밀 정보를 두는 곳
 
@@ -246,12 +247,16 @@ PNG 커버는 글자를 검사할 수 없으므로 눈으로 확인한다.
 | 공개 전 점검 목록 | `portfolio-private/public-review.md` | **비공개** |
 | 공개 패턴 (내부 테이블 접두사, IP, `호스트:포트`, API 경로 — 표 칸에 경로만 있는 것 포함, 파일 이름, 대문자 식별자, 클래스 · 필드 · 함수 이름, 인스턴스 사양) | `guard.config.ts` | 공개해도 되는 규칙. 표준 라이브러리 · 오픈소스 이름만 허용 목록에 둔다 |
 | 고객 도메인 · 연동 업체 이름 | `portfolio-private/sync.local.json` 금지어 | **비공개**. 공개 규칙에 적으면 그 자체가 노출이다 |
-| CI 금지어 목록 | Actions 시크릿 `PUBLIC_DENYLIST` | 비공개 |
+| CI 금지어 목록 | Actions 시크릿 `PORTFOLIO_DENYLIST` — 금지어 배열 JSON 의 base64 한 줄. `pnpm guard --secret-file` 이 `portfolio-private/ci-secret.env` 로 만들고 `gh secret set -f` 로 등록한다. `PUBLIC_` 접두사는 Astro · Vite 가 브라우저 코드에 넣어 주는 규칙이라 비밀 값에 쓰지 않는다 | **비공개** |
 
 - 1차 가드(동기화)는 치환 **뒤의** 결과를 금지어 · 치환표의 원문 키 · 공개 패턴으로 검사한다. 공개 카드는 하나라도 걸리면 파일을 쓰지 않으므로, 유출이 공개 리포의 git 이력에 남기 전에 막힌다 (6.7)
-- 2차 가드(CI)는 빌드 결과(`dist/`) 전체를 시크릿 금지어로 검사한다. Markdown 을 손으로 고친 경우도 잡는다
+- 2차 가드(CI, `scripts/guard.ts`)는 배포할 아티팩트 전체를 공개 규칙과 시크릿 금지어(1차와 같은 목록: 금지어 + 치환표의 원문 키)로 검사한다. Markdown 을 손으로 고친 경우나 동기화를 거치지 않는 화면 글(프로필 · 컴포넌트)도 잡는다
+- 하나라도 걸리거나, 금지어 목록이 없거나 비었거나, 모르는 파일 형식이면 배포하지 않는다 (2026-11-09 결정: 시크릿이 없으면 막는다 — 시크릿을 지우거나 이름을 바꾸면 배포가 멈춘다)
+- 금지어는 대소문자 · 전각 · 공백 변형을 접고 HTML 엔티티 · 퍼센트 인코딩을 풀어 찾는다. 로그에는 건수 · 파일 · 규칙 · 번호(#n)만 남긴다
+- 시크릿은 guard 잡에만 준다(npm 패키지 코드가 도는 build 잡과 러너를 나눈다). 배포 권한은 deploy 잡에만 준다
+- 금지어 목록을 바꾸면 `pnpm guard --secret-file` → `gh secret set -f` 로 시크릿도 다시 등록한다
 - 걸리면 치환표에 변형 표기(대소문자, 띄어쓰기 등)를 추가하고 다시 동기화한다
-- 가드는 lockfile 해시 같은 무작위 문자열에서 오탐이 나므로 생성 결과(Markdown · SVG · dist)만 검사한다
+- 가드는 lockfile 해시 같은 무작위 문자열에서 오탐이 나므로 생성 결과(Markdown · SVG · dist)만 검사한다. dist 안에서도 이미지 · 글꼴 같은 바이너리는 보지 않는다
 
 ### 6.7 초안과 공개
 공개 리포라서 **커밋하는 순간 공개**된다. 그래서 공개 점검 전 카드는 리포에 들어가면 안 된다.
@@ -326,7 +331,7 @@ const features = defineCollection({
 06171002.github.io/
 ├─ .github/workflows/deploy.yml
 ├─ scripts/sync/              # index(CLI) · notion · convert · richtext · html · markdown · diagrams · guard · redact · env
-├─ scripts/guard.ts           # CI 2차 가드 (dist 검사) — M3
+├─ scripts/guard.ts           # CI 2차 가드 — 배포 아티팩트 검사 (pnpm guard [폴더] · --secret-file)
 ├─ sync.config.ts             # 공개 설정: 허용 목록(slug · project · order · evidence)
 ├─ guard.config.ts            # 공개 패턴
 ├─ src/
@@ -335,7 +340,7 @@ const features = defineCollection({
 │  ├─ content/drafts/features/…                    # 초안 (gitignore)
 │  ├─ data/projects.ts (+ M2: profile · skills · highlights)
 │  ├─ components/ · layouts/
-│  ├─ lib/describe.ts · og.ts                      # 카드 요약 추출 · OG 이미지 그리기 (M4)
+│  ├─ lib/describe.ts · og.ts · card-refs.ts       # 카드 요약 추출 · OG 이미지 그리기 · 「카드 제목」 링크
 │  ├─ integrations/font-subset.ts                  # 빌드 후 Pretendard 서브셋 (M4)
 │  ├─ pages/index.astro · [project]/index.astro · [project]/[slug].astro · 404.astro
 │  ├─ pages/og/[...path].png.ts · sitemap.xml.ts · robots.txt.ts   # M4
@@ -350,6 +355,7 @@ const features = defineCollection({
 ../portfolio-private/        # 리포 밖 비공개 폴더 (6.6)
 ├─ .env                      # 노션 토큰
 ├─ sync.local.json           # 노션 ID 매핑 · 치환표
+├─ ci-secret.env             # CI 시크릿 값 (pnpm guard --secret-file 이 만든다)
 └─ public-review.md          # 공개 전 점검 목록
 ```
 
@@ -360,7 +366,7 @@ const features = defineCollection({
 ## 10. 배포
 
 - 리포 Settings → Pages → Source 를 **GitHub Actions** 로 설정
-- `main` 에 push 하면: 설치 → 2차 가드 → `astro check` → `astro build` → `withastro/action` + `actions/deploy-pages`
+- `main` 에 push 하면: build 잡(pnpm 설치 → `pnpm build` = `astro check` + `astro build` → Pages 아티팩트) → guard 잡(아티팩트를 받아 풀고 `scripts/guard.ts`, 시크릿 `PORTFOLIO_DENYLIST`) → deploy 잡(`actions/deploy-pages`). `withastro/action@v6` 을 풀어 쓴 것이고 고정 액션 버전(SHA)도 그 액션과 같다. 가드가 빌드 결과를 보므로 빌드 뒤에 둔다
 - `sitemap.xml` · `robots.txt` 는 직접 만든 엔드포인트다 (`src/pages/sitemap.xml.ts` · `robots.txt.ts`). lastmod 는 카드 기준일, 404 는 noindex
 - 페이지마다 title · description · canonical · OG(홈 · 프로젝트는 website, 카드는 article + 기준일) · `twitter:card` · `lang="ko"`. 카드 description 은 사본의 '요약' 속성이고, 비어 있으면 본문 '개요'의 첫 문단을 문장 단위로 150자 안에서 자른다 (`src/lib/describe.ts`)
 - OG 이미지(1200×630 PNG — 홈 · 프로젝트 2 · 카드 12)는 빌드 때 SVG 틀에 글자를 배치해 resvg 로 굽는다 (`src/lib/og.ts`). 글꼴이 Pretendard 정적 OTF 라 CI 에서도 똑같이 그려진다
@@ -426,6 +432,8 @@ M3 전까지 배포본에는 공개 점검을 마친 페이지만 올라간다. 
 - 2026-10-19 · M3 진행: 가드가 표 칸 속 API 경로 · 파일:라인을 잡게 하고 `[비공개]` 일반 제목이 절째 빠지게 함 (커밋 21c438e). 이어서 **공개 기준 개정** — 프로젝트 내부 정보는 싣지 않는다(6.5): 홈 프로젝트 소개 일반화, 카드의 API 수 · 테이블 수 비표시, 가드에 식별자 · 파일 이름 · 인스턴스 사양 규칙, 공개본은 노션 공개용 사본, 소개 문서는 올리지 않음
 - 2026-10-19 · M3 공개: 12장 전부 노션 공개용 사본으로 공개. 사본마다 공개 기준 가드 0건 · 원고와 동기화 결과의 글자 대조 0곳 · 커밋 파일과 빌드 결과의 비공개 용어 0건을 확인했다. 노션에 올리며 생긴 오타는 이 대조로 잡아 사본에서 고쳤고, 블록 끝 줄바꿈이 문단 끝 역슬래시로 찍히던 변환 결함을 고쳤다(56ba6cf). 남은 것: 사용자 검토(14장 3 · 4번)
 - 2026-10-19 · M4: OG 이미지 15장(SVG 틀 + resvg) · `sitemap.xml` · `robots.txt` · 페이지 메타(canonical · OG · `twitter:card` · 홈 JSON-LD) · 카드 요약(사본 '요약' 속성, 비면 개요 첫 문단) · 인쇄 스타일(다크에서도 라이트로, 토글 펼침, 사이트 안 링크 주소) · 다이어그램 다크 이미지 alt · 대비 보정(푸터 글자, b2b 카드 표지) · CSS 인라인 · Pretendard 사이트 서브셋(글자 895개 · 146KB 한 벌 + preload). 로컬 Lighthouse 모바일 15페이지 전부 성능 98–99 · 접근성 · 권장사항 · SEO 100, 품질 기준(11장) · 깨진 내부 링크 0 · 본문이 서브셋 밖 글꼴로 그려진 글자 0(이모지 · 인라인 코드 · 원본에도 없는 └ 제외). 배포(d7e173e · 런 39268167161) 후 PageSpeed Insights 모바일: 홈 · /b2b/ · 데드락 카드 네 항목 100, 주문/결제 카드 성능 98 · 실시간 STT 카드 성능 99(나머지 100). 변경 전 주문/결제 75 · 데드락 70(FCP 4초대) → FCP 0.8–1.0초 · LCP 1.5–1.7초 · TBT 0ms
+- 2026-11-09 · M3 남은 것 마무리: **CI 2차 가드** — `scripts/guard.ts` · 워크플로 build → guard → deploy · 시크릿 `PORTFOLIO_DENYLIST` (커밋 9ac7073 · 런 42559123933. M1 에서 넘긴 일 해소). **「카드 제목」 자동 링크** — 렌더 때 연결, 카드 참조 9곳 중 4곳 링크, 제목 표기가 다른 5곳은 빌드 경고로 남김(사본 수정 후보) (4156791 · 런 42561402214)
+- 2026-11-09 · 카드 사실 대조(원래 코드 리포와 대조, 보고서는 비공개 폴더): 정정 2건 — 배치 전사·요약 · 비동기 큐 & 관측성의 Celery 동시성을 실측에 쓴 CPU 배포 구성에 맞춰 4 → 2(자식 2 × 추론 스레드 2 = 4 스레드 상한)로 고치고 설정 주석을 인용하던 문단은 배분 의도만 남김 (c1d43f2 · 런 42560486095). 주문/결제의 커넥션 풀 수치('활성 20/20 · 대기 75')는 장바구니 조회 부하의 값이라 출처를 바로잡고 '주문당 점유 구간 단축'은 추정으로 표시 (0f89334 · 런 42561402214). 남은 것: STT 카드의 beam · 지연 분해 정정(배포 설정 확인 필요), 카드 참조 5곳 제목 맞추기, 테스트 작성자 표기 확인 (14장 6번)
 
 ---
 
@@ -436,6 +444,7 @@ M3 전까지 배포본에는 공개 점검을 마친 페이지만 올라간다. 
 3. **공개용 사본 검토**: 사본 초안(노션 '공개용 카드' DB)을 읽고 고친다. 처음 한 번은 사본 데이터베이스가 든 페이지에 `portfolio-sync` 연결을 추가한다
 4. **정합성 수정**: 카드 간 불일치 · 근거 표기 보강 · 오타 · 끊긴 참조 — 사본에 반영 (목록은 비공개 폴더)
 5. (선택) **검증 속성**: 두 '담당 기능 상세' DB 에 `검증` 다중 선택 속성(실측 / 테스트 / 정적 분석 / 추정) 추가. 노션 카드에도 보이면 좋은 정보이고, 사이트 근거 배지가 이 값을 쓴다. 안 만들면 `sync.config.ts` 에 카드별로 적는다
+6. **사실 대조 확인** (2026-11-09): 비공개 보고서 `fact-check-2026-11-09.md` 끝의 목록 — 테스트 작성자 표기(카드의 '테스트로 고정했다'가 본인 작업으로 읽혀도 되는지), 직거래 결함을 잡은 부하 테스트 기록, STT 2026-08-30 측정 때의 설정(모델 · beam) · 로그, 데드락 수정의 운영 반영 표기
 
 ---
 

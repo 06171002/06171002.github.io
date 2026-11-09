@@ -15,6 +15,8 @@
 | `pnpm dev` | 개발 서버 (http://localhost:4321) |
 | `pnpm build` | 타입 검사(`astro check`) + 정적 빌드 → `dist/` |
 | `pnpm preview` | 빌드 결과 미리보기 |
+| `pnpm guard` | 빌드 결과(`dist/`)를 공개 규칙 + 비공개 금지어로 검사한다 (CI 2차 가드와 같은 검사) |
+| `pnpm guard --secret-file` | 금지어 목록을 바꾼 뒤 CI 시크릿 값 파일(`../portfolio-private/ci-secret.env`)을 만든다 → `gh secret set -f` 로 등록 |
 
 ## 노션 동기화
 
@@ -32,7 +34,7 @@
 
 ## 배포
 
-`main` 에 push 하면 GitHub Actions(`.github/workflows/deploy.yml`)가 빌드해 GitHub Pages 에 올린다.
+`main` 에 push 하면 GitHub Actions(`.github/workflows/deploy.yml`)가 빌드 → 2차 가드(빌드 결과를 공개 규칙 + 시크릿 금지어로 검사) → 배포 순서로 GitHub Pages 에 올린다. 가드에 걸리거나 시크릿 `PORTFOLIO_DENYLIST` 가 없으면 배포하지 않는다. 금지어 목록을 바꾸면 시크릿도 다시 등록한다 (`pnpm guard --secret-file` → `gh secret set -f`).
 
 ## 비공개 자료
 

@@ -10,6 +10,7 @@
 - **공개 점검 전 카드는 커밋하지 않는다.** `sync.config.ts` 의 `publish: false` 카드는 gitignore 된 `src/content/drafts/` · `public/content-assets/drafts/` 에만 쓰인다. `publish: true` 로 바꾸기 전에 `pnpm sync --check` 와 비공개 점검 목록을 확인한다 (design.md 6.7)
 - 노션 토큰은 사용자가 직접 넣는다. 스크립트가 API 호출에만 읽고, 토큰 값을 화면에 출력하거나 다른 곳으로 옮기지 않는다
 - 커밋 · push 는 사용자가 요청할 때만 한다
+- 금지어 목록(`sync.local.json`)을 바꾸면 CI 시크릿 `PORTFOLIO_DENYLIST` 도 다시 등록한다 (`pnpm guard --secret-file` → `gh secret set -f`). 시크릿을 지우거나 이름을 바꾸면 모든 배포가 멈춘다
 
 ## 명령어
 
@@ -17,6 +18,7 @@
 - `pnpm build` — `astro check` + `astro build`
 - `pnpm preview` — 빌드 결과 미리보기
 - `pnpm sync [slug …] [--dry-run | --check]` — 노션 동기화 (README 참고)
+- `pnpm guard [폴더] [--secret-file]` — 빌드 결과를 공개 규칙 + 비공개 금지어로 검사 (CI 2차 가드와 같다). `--secret-file` 은 CI 시크릿 값 파일을 비공개 폴더에 만든다
 - 앱 터미널(PowerShell)에서는 실행 정책 때문에 `pnpm.cmd dev` 처럼 `.cmd` 로 실행한다. 실행 정책은 바꾸지 않는다
 
 ## 동기화 규칙 (scripts/sync)
