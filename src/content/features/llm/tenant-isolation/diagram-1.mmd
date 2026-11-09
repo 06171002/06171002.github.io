@@ -1,0 +1,18 @@
+sequenceDiagram
+    participant c as 클라이언트(테넌트)
+    participant g as 게이트웨이
+    participant l as 주인 장부
+    participant p as 공급자(공유 계정)
+    c->>g: 요청 (본문 어딘가에 자료 ID)
+    g->>g: 메타데이터를 뺀 본문 전체에서 ID 수집<br/>모델이 읽는 자리 · 지난 답 자리
+    g->>l: 이 테넌트의 것인가
+    alt 남의 것이거나 없는 것
+        g-->>c: 같은 404 (공급자에 보내지 않음)
+    else 주인 확인
+        g->>p: 요청 전달
+        p-->>g: 답 · 스트림 이벤트
+        g->>g: 새 ID는 공급자가 두는 자리에서만 읽음
+        g->>l: 새 컨테이너 · 만든 파일의 주인 기록
+        Note over g,l: 기록에 실패하면 오류로 끝내고 ID는 내보내지 않음
+        g-->>c: 기록한 뒤에 그 답 · 이벤트를 넘김
+    end

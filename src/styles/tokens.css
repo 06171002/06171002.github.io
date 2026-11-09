@@ -44,6 +44,8 @@
     --project-b2b-bg: light-dark(#f1f6ea, #18220f);
     --project-stt: light-dark(#6047b8, #a993ec);
     --project-stt-bg: light-dark(#f2effb, #1f1a33);
+    --project-llm: light-dark(#0b6b77, #6cc8d4); /* 흰 바탕 6.2:1 · 표지 바탕 5.5:1 · 다크 9.8:1 · 다크 표지 8.1:1 */
+    --project-llm-bg: light-dark(#e7f4f6, #10262a);
 
     /* 글꼴 · 크기 */
     --font-sans:

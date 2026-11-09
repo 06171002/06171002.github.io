@@ -17,6 +17,14 @@ export const projects = {
         role: '백엔드',
         stack: ['Python', 'FastAPI', 'Celery', 'Redis'],
     },
+    llm: {
+        name: '사내 LLM 게이트웨이',
+        short: 'LLM 게이트웨이',
+        summary:
+            '사내 서비스가 OpenAI · Anthropic · 사내 Ollama 모델을 한 입구로 쓰게 하는 LLM 게이트웨이. 예산 예약 · 정산과 유료 요금 셈, 테넌트 자료 격리를 설계했다. 코드와 테스트는 AI 코딩 에이전트(Claude Code)가 썼고, 나는 설계 판단 · 검증 · 배포를 맡았다.',
+        role: '백엔드 설계 · 검증',
+        stack: ['Python', 'FastAPI', 'httpx', 'SQLAlchemy', 'MySQL'],
+    },
 } as const;
 
 export type ProjectKey = keyof typeof projects;
