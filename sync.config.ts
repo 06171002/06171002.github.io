@@ -23,7 +23,7 @@ export interface FeatureEntry {
 export const features: FeatureEntry[] = [
     // 기업 간 구매·조달 플랫폼
     { project: 'b2b', slug: 'order-deadlock', order: 1, evidence: ['measured'], publish: true },
-    { project: 'b2b', slug: 'direct-trade', order: 2, evidence: ['measured'], publish: true },
+    { project: 'b2b', slug: 'direct-trade', order: 2, evidence: ['tested'], publish: true },
     { project: 'b2b', slug: 'supplier-po-delivery', order: 3, evidence: ['tested'], publish: true },
     { project: 'b2b', slug: 'claims', order: 4, evidence: ['tested', 'measured'], publish: true },
     { project: 'b2b', slug: 'order-payment', order: 5, evidence: ['measured', 'tested'], publish: true },
@@ -32,7 +32,7 @@ export const features: FeatureEntry[] = [
     // 실시간 음성 전사·요약 STT 서버
     { project: 'stt', slug: 'batch-transcription', order: 1, evidence: ['tested'], publish: true },
     { project: 'stt', slug: 'engine-abstraction', order: 2, evidence: ['measured'], publish: true },
-    { project: 'stt', slug: 'async-queue-observability', order: 3, evidence: ['tested', 'measured'], publish: true },
-    { project: 'stt', slug: 'room-summary', order: 4, evidence: ['tested', 'measured'], publish: true },
+    { project: 'stt', slug: 'async-queue-observability', order: 3, evidence: ['tested'], publish: true },
+    { project: 'stt', slug: 'room-summary', order: 4, evidence: ['tested'], publish: true },
     { project: 'stt', slug: 'realtime-stt', order: 5, evidence: ['tested', 'measured'], publish: true },
 ];
