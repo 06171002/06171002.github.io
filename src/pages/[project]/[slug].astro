@@ -4,9 +4,11 @@ import { getCollection, render } from 'astro:content';
 import CardRefs from '../../components/CardRefs.astro';
 import EvidenceBadges from '../../components/EvidenceBadges.astro';
 import GlanceRows from '../../components/GlanceRows.astro';
+import ImageSizes from '../../components/ImageSizes.astro';
 import Base from '../../layouts/Base.astro';
 import { projects } from '../../data/projects';
 import { describe } from '../../lib/describe';
+import { svgSize } from '../../lib/figure-size';
 import '../../styles/content.css';
 
 export async function getStaticPaths() {
@@ -50,6 +52,8 @@ const meta = [data.domain, `${basis} 기준`].filter(Boolean);
 // '한눈에' — 성과 제목 + 그림 + 문제 · 해결 · 결과 (docs/design.md 5.3). 문장은 대표 사례만, 그림은 어느 카드나 가질 수 있다
 const glance = data.glance ?? null;
 const leadFigure = data.leadFigure ?? null;
+// 그림이 뜨기 전에 자리를 잡도록 SVG viewBox 의 가로 · 세로를 속성으로 붙인다 (라이트 · 다크는 같은 크기)
+const leadSize = leadFigure ? svgSize(leadFigure.light) : null;
 // 검색 · 공유 설명: 사본의 '요약' 속성 → 성과 제목 → 개요 첫 문단 → 제목 + 키워드
 const description =
     data.description ??
@@ -102,10 +106,19 @@ const description =
                                 <img
                                     src={leadFigure.light}
                                     alt={leadFigure.alt}
+                                    width={leadSize?.width}
+                                    height={leadSize?.height}
                                     class="diagram-light"
                                     decoding="async"
                                 />
-                                <img src={leadFigure.dark} alt={leadFigure.alt} class="diagram-dark" decoding="async" />
+                                <img
+                                    src={leadFigure.dark}
+                                    alt={leadFigure.alt}
+                                    width={leadSize?.width}
+                                    height={leadSize?.height}
+                                    class="diagram-dark"
+                                    decoding="async"
+                                />
                                 <span class="glance-figure-more">그림 크게 보기 ↗</span>
                             </a>
                         </figure>
@@ -130,9 +143,11 @@ const description =
             )}
 
             <div class="prose">
-                <CardRefs cards={cards} self={self}>
-                    <Content />
-                </CardRefs>
+                <ImageSizes>
+                    <CardRefs cards={cards} self={self}>
+                        <Content />
+                    </CardRefs>
+                </ImageSizes>
             </div>
 
             {(prev || next) && (
