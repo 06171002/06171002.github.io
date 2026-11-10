@@ -71,7 +71,11 @@ const description =
             {data.draft && <p class="draft-banner">초안 · 공개 점검 전이라 배포되지 않는 페이지입니다</p>}
             <header class="doc-head">
                 <nav class="crumbs" aria-label="경로">
-                    <a href="/">홈</a> › <a href={`/${data.project}/`}>{project.name}</a>
+                    <a href="/">홈</a>
+                    <span class="sep" aria-hidden="true">
+                        /
+                    </span>
+                    <a href={`/${data.project}/`}>{project.short}</a>
                 </nav>
                 <h1 class="doc-title">{data.title}</h1>
                 <p class="doc-meta">{meta.join(' · ')}</p>
@@ -87,8 +91,8 @@ const description =
 
             {(glance || leadFigure) && (
                 <section class="glance" aria-labelledby="glance-title">
-                    <h2 id="glance-title" class="glance-label">
-                        한눈에
+                    <h2 id="glance-title" class="eyebrow glance-label">
+                        At a glance · 한눈에
                     </h2>
                     {glance && <p class="glance-headline">{glance.headline}</p>}
                     {/* 첫 화면에 있는 그림이라 지연 로딩하지 않는다. 좁은 화면에서는 글자가 작아지므로 원본을 새 탭으로 연다 */}
@@ -153,7 +157,7 @@ const description =
 
         {toc.length > 1 && (
             <aside class="toc-aside toc" aria-label="목차">
-                <p class="toc-title">목차</p>
+                <p class="toc-title label">Contents · 목차</p>
                 <ol>
                     {toc.map((heading) => (
                         <li>

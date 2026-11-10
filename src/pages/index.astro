@@ -9,6 +9,15 @@ import { skills } from '../data/skills';
 const entries = await getCollection('features');
 const cardsOf = (key: string) =>
     entries.filter((entry) => entry.data.project === key).sort((a, b) => a.data.order - b.data.order);
+const published = entries.filter((entry) => !entry.data.draft);
+const shown = projectKeys.filter((key) => cardsOf(key).length > 0);
+// 첫 화면 오른쪽의 요약 칸 — 모두 프로필 · 프로젝트 데이터에서 온다
+const facts = [
+    { label: 'Career', value: profile.career },
+    { label: 'Projects', value: shown.map((key) => projects[key].short).join(' · ') },
+    { label: 'Features', value: `기능 카드 ${published.length}장 · 근거 배지(실측 · 테스트)` },
+    { label: 'Stack', value: skills[0].items.slice(0, 4).join(' · ') },
+];
 // 검색 엔진용 인물 정보 (docs/design.md 10장)
 const person = {
     '@context': 'https://schema.org',
@@ -26,152 +35,368 @@ const person = {
     description={`측정 가능한 시스템 개선에 집중하는 ${profile.role} ${profile.name}의 포트폴리오`}
 >
     <script type="application/ld+json" set:html={JSON.stringify(person)} />
-    <main id="main" class="home container">
-        <section class="hero" aria-labelledby="hero-name">
-            <p class="eyebrow">
-                {profile.role} · {profile.career}
-            </p>
-            <h1 id="hero-name">{profile.name}</h1>
-            <p class="tagline">{profile.tagline}</p>
-            <p class="contacts">
-                <a href={`mailto:${profile.email}`}>{profile.email}</a>
-                <a href={profile.github}>{profile.github.replace('https://', '')}</a>
-            </p>
-        </section>
-
-        <section aria-labelledby="skills-title">
-            <h2 id="skills-title" class="section-label">
-                스킬
-            </h2>
-            <ul class="skills">
-                {skills.map((skill) => (
-                    <li>
-                        <h3>{skill.group}</h3>
-                        <p>{skill.items.join(' · ')}</p>
-                    </li>
+    <main id="main" class="home">
+        <section class="hero container" aria-labelledby="hero-name">
+            <div class="hero-text">
+                <p class="eyebrow">Backend Engineer · {profile.role}</p>
+                <h1 id="hero-name">{profile.name}</h1>
+                <p class="hero-lead">{profile.tagline}</p>
+                <div class="hero-actions">
+                    {shown.length > 0 && (
+                        <a class="btn btn-primary" href="#projects">
+                            프로젝트 보기 <span aria-hidden="true">↓</span>
+                        </a>
+                    )}
+                    <a class="btn btn-secondary" href={profile.github}>
+                        GitHub <span aria-hidden="true">↗</span>
+                    </a>
+                </div>
+                <p class="hero-mail">
+                    <a href={`mailto:${profile.email}`}>{profile.email}</a>
+                </p>
+            </div>
+            <dl class="facts card">
+                {facts.map((fact) => (
+                    <div class="fact">
+                        <dt class="label">{fact.label}</dt>
+                        <dd>{fact.value}</dd>
+                    </div>
                 ))}
-            </ul>
+            </dl>
         </section>
 
-        <section aria-labelledby="projects-title">
-            <h2 id="projects-title" class="section-label">
-                프로젝트
-            </h2>
-            {projectKeys.map((key) => {
-                const project = projects[key];
-                const cards = cardsOf(key);
-                return (
-                    <article class="project">
-                        <div class="project-head">
-                            <h3>{project.name}</h3>
-                            {cards.length > 0 && <a href={`/${key}/`}>프로젝트 보기 →</a>}
-                        </div>
-                        <p class="project-summary">{project.summary}</p>
-                        <p class="project-meta">
-                            {project.role} · {project.stack.join(' · ')}
-                        </p>
-                        {cards.length > 0 && (
-                            <ul class="chip-list">
-                                {cards.map((card) => (
-                                    <li>
-                                        <a class="chip" href={`/${key}/${card.id}/`}>
-                                            {card.data.title}
-                                        </a>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </article>
-                );
-            })}
+        <section class="band" aria-labelledby="skills-title">
+            <div class="container">
+                <div class="section-head">
+                    <p class="eyebrow">Skills · 스킬</p>
+                    <h2 id="skills-title" class="section-title">
+                        다루는 기술
+                    </h2>
+                </div>
+                <ul class="skills">
+                    {skills.map((skill) => (
+                        <li>
+                            <h3 class="label">{skill.group}</h3>
+                            <p>{skill.items.join(' · ')}</p>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        </section>
+
+        <section id="projects" class="container projects" aria-labelledby="projects-title">
+            <div class="section-head">
+                <p class="eyebrow">Projects · 프로젝트</p>
+                <h2 id="projects-title" class="section-title">
+                    맡은 프로젝트
+                </h2>
+            </div>
+            <ol class="project-list">
+                {projectKeys.map((key, index) => {
+                    const project = projects[key];
+                    const cards = cardsOf(key);
+                    return (
+                        <li class={`project card project-${key}`}>
+                            <div class="project-main">
+                                <p class="project-label">
+                                    <span class="label">Project {String(index + 1).padStart(2, '0')}</span>
+                                    <span class="project-role">{project.role}</span>
+                                </p>
+                                <h3>{project.name}</h3>
+                                <p class="project-summary">{project.summary}</p>
+                                <p class="project-stack">{project.stack.join(' · ')}</p>
+                            </div>
+                            {cards.length > 0 && (
+                                <>
+                                    <ol class="project-cards" aria-label={`${project.short} 기능 카드`}>
+                                        {cards.map((card) => (
+                                            <li>
+                                                <a href={`/${key}/${card.id}/`}>
+                                                    <span class="project-card-no">
+                                                        {String(card.data.order).padStart(2, '0')}
+                                                    </span>
+                                                    <span class="project-card-title">{card.data.title}</span>
+                                                    <span class="project-card-arrow" aria-hidden="true">
+                                                        →
+                                                    </span>
+                                                </a>
+                                            </li>
+                                        ))}
+                                    </ol>
+                                    <a class="btn btn-secondary project-more" href={`/${key}/`}>
+                                        프로젝트 보기 <span aria-hidden="true">→</span>
+                                    </a>
+                                </>
+                            )}
+                        </li>
+                    );
+                })}
+            </ol>
         </section>
     </main>
 </Base>
 
 <style>
-    .home {
-        padding-top: 3.5rem;
-    }
-
-    .home > section + section {
-        margin-top: 3.5rem;
-    }
-
+    /* ---------- 첫 화면: 왼쪽 소개 · 오른쪽 요약 칸 ---------- */
     .hero {
-        max-width: var(--read-width);
+        display: grid;
+        gap: 2.5rem;
+        padding-top: clamp(3rem, 8vw, 6.5rem);
+        padding-bottom: var(--section-y);
+    }
+
+    @media (min-width: 960px) {
+        .hero {
+            grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+            align-items: end;
+            gap: 4rem;
+        }
     }
 
     .hero h1 {
-        margin: 0 0 0.75rem;
-        font-size: clamp(2rem, 6vw, 2.75rem);
+        margin: 0 0 1.25rem;
+        font-size: clamp(2.75rem, 7vw, 4rem);
+        line-height: 1.1;
+        letter-spacing: -0.035em;
     }
 
-    .tagline {
-        margin: 0 0 1rem;
-        font-size: 1.125rem;
+    .hero-lead {
+        max-width: 38rem;
+        margin: 0 0 2rem;
+        color: var(--muted);
+        font-size: clamp(1.0625rem, 2vw, 1.1875rem);
         line-height: 1.65;
     }
 
-    .contacts {
+    .hero-actions {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.5rem 1.25rem;
-        margin: 0;
+        gap: 0.625rem;
+    }
+
+    .hero-mail {
+        margin: 1rem 0 0;
         font-size: var(--text-sm);
     }
 
-    .skills {
+    .hero-mail a {
+        color: var(--muted);
+    }
+
+    .hero-mail a:hover {
+        color: var(--accent);
+    }
+
+    /* 2 × 2 요약 칸 — 칸 사이 가는 선 */
+    .facts {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-        gap: 1.25rem 2rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         margin: 0;
-        padding: 0;
-        list-style: none;
+        overflow: hidden;
     }
 
-    .skills h3 {
-        margin: 0 0 0.25rem;
-        font-size: 0.9375rem;
+    .fact {
+        padding: 1.125rem 1.25rem 1.25rem;
+        border-bottom: 1px solid var(--border);
     }
 
-    .skills p {
+    .fact:nth-child(odd) {
+        border-right: 1px solid var(--border);
+    }
+
+    .fact:nth-last-child(-n + 2) {
+        border-bottom: 0;
+    }
+
+    .fact .label {
+        margin: 0 0 0.375rem;
+        color: var(--accent);
+    }
+
+    .fact dd {
         margin: 0;
         color: var(--muted);
         font-size: var(--text-sm);
         line-height: 1.6;
     }
 
-    .project {
-        padding: 1.25rem 0;
-        border-top: 1px solid var(--border);
+    /* ---------- 스킬: 흰 띠 구간, 위 선이 있는 칸 ---------- */
+    .band {
+        padding: var(--section-y) 0;
+        border-block: 1px solid var(--border);
+        background: var(--surface);
     }
 
-    .project-head {
+    .skills {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+        gap: 2rem 2.5rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .skills li {
+        padding-top: 1.125rem;
+        border-top: 1px solid var(--border-strong);
+    }
+
+    .skills .label {
+        margin-bottom: 0.5rem;
+        color: var(--fg);
+        font-weight: 600;
+    }
+
+    .skills p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.9375rem;
+        line-height: 1.7;
+    }
+
+    /* ---------- 프로젝트: 번호 붙은 흰 카드 ---------- */
+    .projects {
+        padding-top: var(--section-y);
+    }
+
+    .project-list {
+        display: grid;
+        gap: 1.25rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    /* 넓으면 왼쪽 소개 · 오른쪽 기능 목록, 좁으면 소개 → 목록 → 버튼 순 */
+    .project {
+        display: grid;
+        grid-template-areas: 'main' 'cards' 'more';
+        gap: 1.5rem;
+        padding: clamp(1.5rem, 3vw, 2.25rem);
+    }
+
+    @media (min-width: 960px) {
+        .project {
+            grid-template-areas:
+                'main cards'
+                'more cards';
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            grid-template-rows: auto 1fr;
+            gap: 1.5rem 3.5rem;
+        }
+    }
+
+    .project-main {
+        grid-area: main;
+    }
+
+    .project-label {
         display: flex;
         flex-wrap: wrap;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 0.25rem 1rem;
+        align-items: center;
+        gap: 0.5rem 0.75rem;
+        margin: 0 0 0.75rem;
     }
 
-    .project-head h3 {
+    .project-label .label {
         margin: 0;
-        font-size: 1.1875rem;
+        color: var(--project-color);
     }
 
-    .project-head a {
-        font-size: var(--text-sm);
-        text-decoration: none;
+    .project-b2b {
+        --project-color: var(--project-b2b);
+    }
+
+    .project-stt {
+        --project-color: var(--project-stt);
+    }
+
+    .project-llm {
+        --project-color: var(--project-llm);
+    }
+
+    .project-role {
+        color: var(--subtle);
+        font-size: var(--text-xs);
+    }
+
+    .project h3 {
+        margin: 0 0 0.75rem;
+        font-size: clamp(1.375rem, 3vw, 1.75rem);
+        letter-spacing: -0.03em;
     }
 
     .project-summary {
-        max-width: var(--read-width);
-        margin: 0.5rem 0 0.25rem;
+        max-width: 44rem;
+        margin: 0 0 0.75rem;
+        color: var(--muted);
     }
 
-    .project-meta {
-        margin: 0 0 0.875rem;
-        color: var(--muted);
+    .project-stack {
+        margin: 0;
+        color: var(--subtle);
+        font-family: var(--font-label);
+        font-size: 0.75rem;
+        letter-spacing: 0.04em;
+    }
+
+    /* 기능 카드 목록: 번호 · 제목 · 화살표, 줄 사이 가는 선 */
+    .project-cards {
+        grid-area: cards;
+        margin: 0;
+        padding: 0;
+        border-top: 1px solid var(--border);
+        list-style: none;
+    }
+
+    .project-cards li {
+        border-bottom: 1px solid var(--border);
+    }
+
+    .project-cards a {
+        display: flex;
+        align-items: baseline;
+        gap: 0.875rem;
+        padding: 0.75rem 0.125rem;
+        color: var(--fg);
+        font-size: 0.9375rem;
+        line-height: 1.5;
+        text-decoration: none;
+    }
+
+    .project-cards a:hover {
+        color: var(--accent);
+    }
+
+    .project-card-no {
+        flex: none;
+        color: var(--project-color);
+        font-family: var(--font-label);
+        font-size: 0.75rem;
+        letter-spacing: 0.06em;
+    }
+
+    .project-card-title {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .project-card-arrow {
+        flex: none;
+        color: var(--subtle);
+        transition: transform 0.15s ease;
+    }
+
+    .project-cards a:hover .project-card-arrow {
+        color: var(--accent);
+        transform: translateX(2px);
+    }
+
+    .project-more {
+        grid-area: more;
+        justify-self: start;
+        align-self: end;
+        padding: 0.5rem 1rem;
         font-size: var(--text-sm);
     }
 </style>

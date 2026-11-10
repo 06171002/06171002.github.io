@@ -8,27 +8,28 @@ interface Props {
 
 const { entry } = Astro.props;
 const data = entry.data;
-// 노션 커버 이미지 대신 카드 데이터로 같은 모양을 그린다 — 다크 모드에서도 어울리고, 커버 없는 카드도 같은 모양이 된다.
-// API 수 · 테이블 수는 프로젝트 내부 정보라 싣지 않는다 (docs/design.md 6.5) → 표지엔 앞 키워드 2개, 본문엔 그다음 키워드
-const coverKeywords = data.keywords.slice(0, 2);
-const bodyKeywords = data.keywords.slice(2, 5);
+// 노션 커버 이미지는 쓰지 않는다 — 흰 카드에 프로젝트 색 점 · 번호 · 도메인만 둔다 (다크 모드에서도 같은 모양).
+// API 수 · 테이블 수는 프로젝트 내부 정보라 싣지 않는다 (docs/design.md 6.5)
+const number = String(data.order).padStart(2, '0');
+const topLabel = [number, data.domain].filter(Boolean).join(' · ');
+const keywords = data.keywords.slice(0, 3);
 ---
 
 <li class={`feature-card project-${data.project}`}>
     <a href={`/${data.project}/${entry.id}/`}>
-        <div class="feature-cover" aria-hidden="true">
-            {data.domain && <span class="feature-domain">{data.domain}</span>}
-            {coverKeywords.length > 0 && <span class="feature-cover-keywords">{coverKeywords.join(' · ')}</span>}
-        </div>
-        <div class="feature-body">
-            <h3 class="feature-title">
-                {data.title}
-                {data.draft && <span class="draft-tag">초안</span>}
-            </h3>
-            {/* 대표 사례 카드만 성과 제목이 있다 — 목록에서 무게가 드러나게 */}
-            {data.glance && <p class="feature-headline">{data.glance.headline}</p>}
+        <p class="feature-top">
+            <span class="feature-dot" aria-hidden="true"></span>
+            <span class="label">{topLabel}</span>
+        </p>
+        <h3 class="feature-title">
+            {data.title}
+            {data.draft && <span class="draft-tag">초안</span>}
+        </h3>
+        {/* 대표 사례 카드만 성과 제목이 있다 — 목록에서 무게가 드러나게 */}
+        {data.glance && <p class="feature-headline">{data.glance.headline}</p>}
+        <div class="feature-foot">
             <EvidenceBadges kinds={data.evidence} />
-            {bodyKeywords.length > 0 && <p class="feature-keywords">{bodyKeywords.join(' · ')}</p>}
+            {keywords.length > 0 && <p class="feature-keywords">{keywords.join(' · ')}</p>}
         </div>
     </a>
 </li>
@@ -37,85 +38,88 @@ const bodyKeywords = data.keywords.slice(2, 5);
     .feature-card a {
         display: flex;
         flex-direction: column;
+        gap: 0.625rem;
         height: 100%;
-        overflow: hidden;
+        padding: 1.375rem 1.5rem 1.5rem;
         border: 1px solid var(--border);
         border-radius: var(--radius-lg);
+        background: var(--surface);
         color: var(--fg);
         text-decoration: none;
-        transition: border-color 0.15s ease;
+        transition:
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
     }
 
     .feature-card a:hover {
-        border-color: var(--accent);
+        border-color: var(--border-strong);
+        box-shadow: var(--shadow);
     }
 
-    .feature-cover {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        gap: 0.75rem;
-        min-height: 5.5rem;
-        padding: 0.875rem 1rem;
-        border-bottom: 1px solid var(--border);
-        border-left: 5px solid var(--project-color);
-        background: var(--project-bg);
+    .feature-card a:hover .feature-title {
+        color: var(--accent);
     }
 
     .project-b2b {
         --project-color: var(--project-b2b);
-        --project-bg: var(--project-b2b-bg);
     }
 
     .project-stt {
         --project-color: var(--project-stt);
-        --project-bg: var(--project-stt-bg);
     }
 
     .project-llm {
         --project-color: var(--project-llm);
-        --project-bg: var(--project-llm-bg);
     }
 
-    .feature-domain {
-        align-self: flex-start;
-        padding: 0 0.5rem;
-        border: 1px solid var(--project-color);
-        border-radius: 999px;
-        color: var(--project-color);
-        font-size: 0.75rem;
-        font-weight: 600;
-        line-height: 1.6;
-    }
-
-    .feature-cover-keywords {
-        color: var(--project-color);
-        font-size: var(--text-sm);
-        font-weight: 600;
-    }
-
-    .feature-body {
+    .feature-top {
         display: flex;
-        flex-direction: column;
+        align-items: center;
         gap: 0.5rem;
-        padding: 0.875rem 1rem 1rem;
+        margin: 0;
+    }
+
+    .feature-top .label {
+        margin: 0;
+        color: var(--project-color);
+    }
+
+    .feature-dot {
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 50%;
+        background: var(--project-color);
     }
 
     .feature-title {
         margin: 0;
-        font-size: 1.0625rem;
+        font-size: 1.1875rem;
         line-height: 1.4;
+        letter-spacing: -0.025em;
+        transition: color 0.15s ease;
     }
 
     .feature-headline {
         margin: 0;
+        color: var(--muted);
         font-size: var(--text-sm);
-        line-height: 1.55;
+        line-height: 1.6;
     }
 
+    /* 배지 · 키워드는 카드 아래로 붙인다 — 이웃 카드와 높이가 달라도 아래 줄이 맞는다 */
+    .feature-foot {
+        display: flex;
+        flex-direction: column;
+        gap: 0.625rem;
+        margin-top: auto;
+        padding-top: 0.5rem;
+    }
+
+    /* 키워드는 한글이 많아 고정폭 글꼴이면 띄어쓰기가 벌어진다 — 본문 글꼴로 작게 */
     .feature-keywords {
         margin: 0;
-        color: var(--muted);
+        color: var(--subtle);
         font-size: var(--text-xs);
+        line-height: 1.6;
     }
 </style>

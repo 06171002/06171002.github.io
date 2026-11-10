@@ -21,53 +21,79 @@ type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 
 const { key, items } = Astro.props as Props;
 const project = projects[key];
+const number = String(projectKeys.indexOf(key) + 1).padStart(2, '0');
 ---
 
 <Base title={`${project.name} · 이상진`} description={project.summary} image={`/og/${key}.png`}>
-    <main id="main" class="container project-page">
-        <nav class="crumbs" aria-label="경로">
-            <a href="/">홈</a> ›
-        </nav>
-        <h1>{project.name}</h1>
-        <p class="summary">{project.summary}</p>
-        <p class="meta">
-            {project.role} · {project.stack.join(' · ')}
-        </p>
+    <main id="main" class="project-page">
+        <section class="container page-head">
+            <nav class="crumbs" aria-label="경로">
+                <a href="/">홈</a>
+                <span class="sep" aria-hidden="true">
+                    /
+                </span>
+                <span>{project.short}</span>
+            </nav>
+            <p class="eyebrow">
+                Project {number} · {project.role}
+            </p>
+            <h1>{project.name}</h1>
+            <p class="summary">{project.summary}</p>
+            <p class="stack">{project.stack.join(' · ')}</p>
+        </section>
 
-        <h2 class="section-label">담당 기능 {items.length}</h2>
-        <ul class="feature-grid">
-            {items.map((entry) => (
-                <FeatureCard entry={entry} />
-            ))}
-        </ul>
+        <section class="container features" aria-labelledby="features-title">
+            <h2 id="features-title" class="section-label">
+                Features · 담당 기능 {items.length}
+            </h2>
+            <ul class="feature-grid">
+                {items.map((entry) => (
+                    <FeatureCard entry={entry} />
+                ))}
+            </ul>
+        </section>
     </main>
 </Base>
 
 <style>
-    .project-page {
-        padding-top: 2.5rem;
+    .page-head {
+        padding-top: clamp(2.5rem, 6vw, 4.5rem);
+        padding-bottom: clamp(2.5rem, 5vw, 3.5rem);
     }
 
     h1 {
-        margin: 0 0 0.75rem;
-        font-size: clamp(1.75rem, 5vw, 2.25rem);
+        max-width: var(--read-width);
+        margin: 0 0 1rem;
+        font-size: clamp(2.125rem, 5.5vw, 3.25rem);
+        line-height: 1.15;
+        letter-spacing: -0.035em;
     }
 
     .summary {
-        max-width: var(--read-width);
-        margin: 0 0 0.5rem;
-        font-size: 1.0625rem;
+        max-width: 42rem;
+        margin: 0 0 1rem;
+        color: var(--muted);
+        font-size: clamp(1.0625rem, 2vw, 1.1875rem);
+        line-height: 1.65;
     }
 
-    .meta {
-        margin: 0 0 2.5rem;
-        color: var(--muted);
-        font-size: var(--text-sm);
+    .stack {
+        margin: 0;
+        color: var(--subtle);
+        font-family: var(--font-label);
+        font-size: 0.75rem;
+        letter-spacing: 0.04em;
+    }
+
+    /* 구분선은 머리글에 — 섹션 자체에 그으면 바깥 여백까지 뻗어 본문 폭과 어긋난다 */
+    .features h2 {
+        padding-top: 2rem;
+        border-top: 1px solid var(--border);
     }
 
     .feature-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
         gap: 1rem;
         margin: 0;
         padding: 0;
