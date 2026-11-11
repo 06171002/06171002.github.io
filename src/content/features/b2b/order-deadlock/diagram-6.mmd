@@ -1,0 +1,10 @@
+sequenceDiagram
+    participant k as 김대리 · 즉시결제
+    participant p as 상품 A4용지
+    participant c as 여신 행
+    participant t as 팀장 · 결재 승인
+    k->>p: 상품 X 획득
+    t->>c: 여신 X 획득
+    k-->>c: 여신 X 요청 · 대기
+    t-->>p: 발주 라인을 넣으며 상품 S 요청 · 대기
+    Note over k,t: 서로 기다림 → 교착, 결재 승인 롤백

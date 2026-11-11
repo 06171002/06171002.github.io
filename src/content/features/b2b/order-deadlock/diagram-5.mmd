@@ -1,0 +1,13 @@
+sequenceDiagram
+    participant f as 주문 F
+    participant k as 채번 카운터 행
+    participant g as 주문 G
+    participant h as 주문 H
+    f->>k: 채번 끝 · X (주문 커밋까지 쥔다)
+    g-->>k: 오늘 행 확보 · 이미 있어 무시되지만 S 요청 · 대기
+    h-->>k: 같은 호출 · S 요청 · 대기
+    f->>k: 커밋 · 락 해제
+    Note over k: G · H의 S가 한꺼번에 허용된다 (S끼리 호환)
+    g-->>k: +1 하려고 X 요청 · H의 S 때문에 대기
+    h-->>k: +1 하려고 X 요청 · G의 S 때문에 대기
+    Note over g,h: 서로의 S를 기다림 → 교착

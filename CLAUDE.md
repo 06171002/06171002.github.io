@@ -18,6 +18,7 @@
 - `pnpm build` — `astro check` + `astro build`
 - `pnpm preview` — 빌드 결과 미리보기
 - `pnpm sync [slug …] [--dry-run | --check]` — 노션 동기화 (README 참고)
+- `pnpm diagrams [slug …]` — 저장된 다이어그램 원문(`diagram-N.mmd`)을 노션 없이 다시 그린다. 그림 테마(`scripts/sync/diagrams.ts`)를 바꾼 뒤 쓴다 — 동기화와 결과가 같다
 - `pnpm guard [폴더] [--secret-file]` — 빌드 결과를 공개 규칙 + 비공개 금지어로 검사 (CI 2차 가드와 같다). `--secret-file` 은 CI 시크릿 값 파일을 비공개 폴더에 만든다
 - 앱 터미널(PowerShell)에서는 실행 정책 때문에 `pnpm.cmd dev` 처럼 `.cmd` 로 실행한다. 실행 정책은 바꾸지 않는다
 

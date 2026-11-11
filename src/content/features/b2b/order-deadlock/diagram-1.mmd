@@ -1,16 +1,10 @@
-flowchart LR
-    subgraph sl["숨은 공유 락 — S락을 아예 잡지 않게"]
-        direction TB
-        c1["① 채번 ↔ 상품<br/>검증 조회가 상품 20행에 S락<br/>→ 락 없는 읽기로<br/>25명 동시 주문 3회 · 교착 23 → 0"]
-        c2["② 임시 주문번호<br/>같은 값끼리 유니크 중복 검사<br/>→ 행마다 다른 값으로<br/>25명 동시 주문 · 교착 23~24 → 0"]
-        c3["③ 채번 루틴<br/>INSERT IGNORE 가 남긴 S락<br/>→ 확인은 락 없이, 갱신 한 번<br/>25세션 동시 채번 · 교착 20~22 → 0"]
-        c1 ~~~ c2 ~~~ c3
-    end
-    subgraph lo["엇갈린 잠금 순서 — 순서를 하나로"]
-        direction TB
-        c4["④ 즉시결제 ↔ 결재 승인<br/>여신 · 상품 잠금 순서가 반대<br/>→ 모두 상품부터<br/>2세션 재현 · 교착 3/3 → 0/3"]
-        c5["⑤ 상품 간 ABBA<br/>담은 순서 ↔ 상품번호 순<br/>→ 즉시주문도 상품번호 순<br/>2세션 재현 · 교착 3/3 → 0/3"]
-        c6["⑥ 구매사 × 공급사 취소<br/>주문 라인 ↔ 발주 라인 순서<br/>→ 공급사 취소도 주문 라인부터<br/>2세션 재현 · 교착 3/3 → 0/3"]
-        c4 ~~~ c5 ~~~ c6
-    end
-    sl ~~~ lo
+sequenceDiagram
+    participant a as 트랜잭션 A
+    participant r1 as 자원 1
+    participant r2 as 자원 2
+    participant b as 트랜잭션 B
+    a->>r1: 획득
+    b->>r2: 획득
+    a-->>r2: 요청 · 대기
+    b-->>r1: 요청 · 대기
+    Note over a,b: 서로가 상대를 기다린다 → 교착, MySQL 이 한쪽을 강제 롤백 (ERROR 1213)

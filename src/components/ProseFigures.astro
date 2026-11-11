@@ -1,0 +1,10 @@
+---
+// 렌더한 본문 HTML 의 다이어그램을 다듬어 내보낸다 (src/lib/figure-size.ts)
+// - <img> 에 width · height(SVG viewBox)를 붙여 그림이 뜨기 전에 자리를 잡는다 (아래 내용이 밀리지 않게)
+// - 그림을 원본 SVG 링크로 감싸 '그림 크게 보기'를 단다 (줄어든 그림에만 보인다)
+import { linkDiagrams, sizeImages } from '../lib/figure-size';
+
+const html = linkDiagrams(sizeImages(await Astro.slots.render('default')));
+---
+
+<Fragment set:html={html} />

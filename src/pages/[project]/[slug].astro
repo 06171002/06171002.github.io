@@ -4,7 +4,7 @@ import { getCollection, render } from 'astro:content';
 import CardRefs from '../../components/CardRefs.astro';
 import EvidenceBadges from '../../components/EvidenceBadges.astro';
 import GlanceRows from '../../components/GlanceRows.astro';
-import ImageSizes from '../../components/ImageSizes.astro';
+import ProseFigures from '../../components/ProseFigures.astro';
 import Base from '../../layouts/Base.astro';
 import { projects } from '../../data/projects';
 import { describe } from '../../lib/describe';
@@ -143,11 +143,11 @@ const description =
             )}
 
             <div class="prose">
-                <ImageSizes>
+                <ProseFigures>
                     <CardRefs cards={cards} self={self}>
                         <Content />
                     </CardRefs>
-                </ImageSizes>
+                </ProseFigures>
             </div>
 
             {(prev || next) && (
@@ -200,4 +200,17 @@ const description =
         { rootMargin: '0px 0px -70% 0px' }
     );
     for (const heading of document.querySelectorAll('.prose h2[id]')) observer.observe(heading);
+
+    // 상자에 맞춰 줄어든 본문 그림에만 '그림 크게 보기'를 보인다 (content.css).
+    // 그림에 width 속성(원래 폭)이 있어 그림이 뜨기 전에도 줄었는지 안다
+    const figures = [...document.querySelectorAll<HTMLElement>('.prose figure.diagram')];
+    const markScaled = () => {
+        for (const figure of figures) {
+            const image = [...figure.querySelectorAll('img')].find((img) => img.getClientRects().length > 0);
+            const natural = Number(image?.getAttribute('width'));
+            figure.classList.toggle('is-scaled', Boolean(image && natural && image.clientWidth < natural - 1));
+        }
+    };
+    markScaled();
+    addEventListener('resize', markScaled);
 </script>

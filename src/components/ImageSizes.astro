@@ -1,9 +1,0 @@
----
-// 렌더한 본문 HTML 의 다이어그램 <img> 에 width · height(SVG viewBox)를 붙여 내보낸다 (src/lib/figure-size.ts)
-// 그림이 뜨기 전에 자리를 잡아 아래 내용이 밀리지 않게 한다
-import { sizeImages } from '../lib/figure-size';
-
-const html = sizeImages(await Astro.slots.render('default'));
----
-
-<Fragment set:html={html} />

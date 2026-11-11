@@ -1,0 +1,10 @@
+sequenceDiagram
+    participant b as 구매자 · 취소
+    participant o as 주문 라인
+    participant po as 발주 라인
+    participant s as 공급사 · 취소
+    b->>o: 주문 라인 X 획득
+    s->>po: 발주 라인 X 획득
+    s-->>o: 주문 라인 X 요청 · 대기
+    b-->>po: 발주 라인 X 요청 · 대기
+    Note over b,s: 서로 기다림 → 교착, 구매자 취소 롤백

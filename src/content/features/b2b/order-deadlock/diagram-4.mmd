@@ -1,0 +1,9 @@
+sequenceDiagram
+    participant c as 주문 C
+    participant t as 주문번호 유니크 인덱스
+    participant d as 주문 D
+    c->>t: 'TEMP' 넣기 · 자기 항목에 X
+    d->>t: 'TEMP' 넣기 · 중복 검사로 앞선 'TEMP' 흔적에 S (앞 빈틈까지)
+    d-->>t: C의 'TEMP' 항목에 S 요청 · C가 X로 쥐고 있어 대기
+    c-->>t: 새 주문번호 넣기 · 들어갈 빈틈을 D의 S가 덮고 있어 대기
+    Note over c,d: 서로 기다림 → 교착, D 롤백

@@ -550,11 +550,36 @@ figure.diagram {
     background: var(--surface);
 }
 
-/* 그림은 상자 폭에 맞춘다. 높이는 width · height 속성(SVG viewBox)의 비율로 그림이 뜨기 전에 잡힌다
-   (src/lib/figure-size.ts) — 속성의 가로 값이 표시 폭을 정하지 않게 폭을 직접 준다 */
+/* 그림은 원래 크기(width · height 속성 = SVG viewBox)로 그리고, 상자보다 크면 상자 폭에 맞춰 줄인다.
+   작은 그림을 상자 폭까지 키우지 않는다 — 노션 · Mermaid 와 같은 표시. 높이는 속성의 비율로 그림이 뜨기 전에 잡힌다
+   (src/lib/figure-size.ts) */
 figure.diagram img {
-    width: 100%;
+    max-width: 100%;
     height: auto;
+}
+
+/* 본문 그림은 원본 SVG 로 가는 링크로 감싼다(렌더 때, src/lib/figure-size.ts). 상자에 맞춰 줄어든 그림에만
+   '그림 크게 보기'를 보인다 (is-scaled 는 카드 페이지 스크립트가 단다) — 좁은 화면에서는 새 탭에서 확대해 본다 */
+.prose figure.diagram a.diagram-open {
+    display: block;
+    color: var(--subtle);
+    text-decoration: none;
+}
+
+.diagram-more {
+    display: none;
+    margin-top: 0.5rem;
+    font-family: var(--font-label);
+    font-size: 0.6875rem;
+    letter-spacing: 0.06em;
+}
+
+.prose figure.diagram.is-scaled .diagram-more {
+    display: block;
+}
+
+.prose figure.diagram a.diagram-open:hover .diagram-more {
+    color: var(--accent);
 }
 
 .diagram-dark {
@@ -711,7 +736,8 @@ mark[class^='bg-'] {
     .toc-aside,
     .toc-mobile,
     .pager,
-    .glance-figure-more {
+    .glance-figure-more,
+    .diagram-more {
         display: none !important;
     }
 
