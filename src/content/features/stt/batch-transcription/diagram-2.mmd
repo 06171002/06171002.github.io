@@ -1,0 +1,12 @@
+sequenceDiagram
+    participant gen as 전사 결과 (하나씩 나온다)
+    participant w as 워커
+    participant out as DB 저장 + Redis 발행
+    gen->>w: 세그먼트 1
+    gen->>w: 세그먼트 2 (미리 읽기)
+    w->>out: 1 — 처리 중
+    gen->>w: 세그먼트 3 (미리 읽기)
+    w->>out: 2 — 처리 중
+    gen-->>w: 더 없음
+    w->>out: 3 — 전사 완료 (마지막)
+    w->>out: LLM 요약 → 최종 요약 → 완료

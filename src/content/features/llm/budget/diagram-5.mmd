@@ -1,0 +1,15 @@
+sequenceDiagram
+    participant r as 자정 1초 전에 시작한 요청
+    participant j as 자정 뒤 오늘의 판정
+    rect rgba(220, 80, 70, 0.14)
+        Note over r,j: 예약을 날마다 따로 세면
+        r->>r: 어제 몫으로 예약
+        j->>j: 오늘 몫의 예약만 센다 → 이 요청을 못 본다
+        r->>j: 끝난 뒤에는 오늘 사용액으로 정산
+    end
+    rect rgba(60, 160, 90, 0.14)
+        Note over r,j: 지금 — 예약은 기간과 상관없이 규칙마다
+        r->>r: 일 한도 규칙에 예약
+        j->>j: 규칙의 진행 중 예약을 센다 → 이 요청도 본다
+        r->>j: 끝난 뒤 오늘 사용액으로 정산
+    end

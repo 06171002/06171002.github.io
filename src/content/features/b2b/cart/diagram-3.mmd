@@ -1,0 +1,5 @@
+flowchart LR
+    vu["동시 요청 100 VU<br/>생각시간 없음"] --> pool["커넥션 풀 · 최대 20<br/>활성 20/20 · 대기 75"]
+    pool --> db["MySQL<br/>CPU 1.3% · 놀고 있음"]
+    ab["풀 크기만 5 → 20 으로 바꾼 A/B<br/>처리량 115.1 → 280.5 req/s"] -.-> pool
+    style pool stroke:#d9534f,stroke-width:3px

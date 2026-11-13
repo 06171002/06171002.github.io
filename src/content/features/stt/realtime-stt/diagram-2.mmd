@@ -1,0 +1,18 @@
+sequenceDiagram
+    participant s1 as 세션 1
+    participant ev as 이벤트 루프
+    participant pool as 스레드풀 · 워커 3
+    participant s2 as 세션 2
+    rect rgba(220, 80, 70, 0.14)
+        Note over s1,s2: 루프에서 바로 추론하면
+        s1->>ev: 발화 세그먼트 → 추론 시작 (블로킹)
+        s2-->>ev: 오디오 청크 · 받지 못하고 대기
+        Note over s1,s2: 추론이 끝날 때까지 모든 연결의 송수신이 멈춘다
+    end
+    rect rgba(60, 160, 90, 0.14)
+        Note over s1,s2: 지금 — 입력 큐를 거쳐 스레드풀로
+        s1->>ev: 발화 세그먼트 → 입력 큐
+        ev->>pool: 추론을 넘긴다
+        s2->>ev: 오디오 청크 · 바로 받는다
+        pool-->>ev: 텍스트 → 결과 큐 → 송신
+    end

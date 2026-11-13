@@ -1,20 +1,12 @@
-stateDiagram-v2
-    state "교환 신청" as e1
-    state "교환 승인" as e2
-    state "수거중" as e3
-    state "수거 완료" as e4
-    state "검수 합격" as e5
-    state "검수 불합격" as e6
-    state "재배송중" as e7
-    state "반송중" as e8
-    state "교환 완료" as e9
-    [*] --> e1: 신청
-    e1 --> e2: 승인 (+마이너스 PO)
-    e2 --> e3: 수거송장
-    e3 --> e4: 수거완료
-    e4 --> e5: 검수합격
-    e4 --> e6: 검수불합격
-    e4 --> e7: 검수 스킵·재배송 (+플러스 PO)
-    e5 --> e7: 재배송 (+플러스 PO)
-    e6 --> e8: 반송
-    e7 --> e9: 배송완료(배치)
+flowchart TB
+    subgraph top[" "]
+        direction LR
+        s["예 · 실결제 33,333원<br/>10개를 3 · 3 · 4개로"] --> r1["1회차 3개<br/>33,333 × 3 ÷ 10<br/>→ 10원 내림 9,990원"] --> r2["2회차 3개<br/>남은 23,343 × 3 ÷ 7<br/>→ 10원 내림 10,000원"]
+    end
+    subgraph bottom[" "]
+        direction LR
+        r3["3회차 · 마지막 4개<br/>남은 13,343원 전부"] --> t["합계 33,333원<br/>= 원결제액"]
+    end
+    top --> bottom
+    style top fill:none,stroke:none
+    style bottom fill:none,stroke:none

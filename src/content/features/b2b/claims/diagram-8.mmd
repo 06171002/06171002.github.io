@@ -1,0 +1,10 @@
+sequenceDiagram
+    participant x as 주문 X 환수 · 50,000
+    participant g as 포인트 원장 버킷 · 잔액 0
+    participant y as 주문 Y 환수 · 50,000
+    x->>g: 잠금 (FOR UPDATE) · 잔액 0
+    y-->>g: 잠금 요청 · 대기
+    x->>g: 복원 +50,000 → 50,000 · 커밋
+    y->>g: 잠금 · 잔액 50,000
+    y->>g: 복원 +50,000 → 100,000 · 커밋
+    Note over x,y: 한쪽이 덮였다면 잔액은 50,000 이었을 것이다

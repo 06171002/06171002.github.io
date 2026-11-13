@@ -1,0 +1,12 @@
+sequenceDiagram
+    participant s as 공급사
+    participant app as 시스템
+    participant t as 택배 프로그램
+    s->>app: 배송 목록 내려받기
+    app-->>s: '준비' 레코드 생성 · 레코드 번호를 엑셀 관리번호로
+    s->>t: 송장 일괄 발급
+    t-->>s: 운송장번호가 채워진 엑셀
+    s->>app: 엑셀 올리기
+    app->>app: 관리번호에서 배송 번호 추출 · 소유 · 상태 · 중복 검증
+    app->>app: 합배송 형제로 확장 (엑셀 1행 → N건)
+    app-->>s: 일괄 출고 → 배송중

@@ -11,193 +11,66 @@ cover: null
 notionEditedAt: "2026-08-31"
 description: null
 glance: {"headline":"실시간 음성 전사 — 추론은 스레드풀로 빼고 무음은 STT 전에 걸러, 배포 서버에서 단일 세션 실시간 전사를 유지했다","problem":["STT 추론은 동기 연산이라 이벤트 루프에서 돌리면 다른 연결의 송수신이 모두 멈춘다.","들어오는 소리를 전부 STT에 넣으면 무음에서 자원을 낭비하고 없는 말이 생기며, 연결이 끊기면 마지막 발화가 사라진다."],"solution":["입력 · 결과 큐를 나누고 추론은 스레드풀로 넘겨 이벤트 루프를 비웠다.","32ms 프레임마다 음성 확률로 발화 경계를 자르는 상태머신으로 무음을 STT 전에 거르고, 연결이 끊기면 남은 버퍼를 채워 강제 전사한다."],"result":["상태머신 테스트 17/17 통과 — 무음만 들어오면 세그먼트가 하나도 나오지 않는다(hypothesis 300 케이스).","배포 서버(CPU)에서 30초 음성을 실시간 배속으로 흘리자 자막 지연 5.1~6.0초(평균 약 5.5초)로 구간이 쌓이지 않고 실시간을 따라갔다."]}
-leadFigure: {"light":"/content-assets/stt/realtime-stt/diagram-1.light.svg","dark":"/content-assets/stt/realtime-stt/diagram-1.dark.svg","alt":"처리 흐름 다이어그램"}
+leadFigure: {"light":"/content-assets/stt/realtime-stt/diagram-1.light.svg","dark":"/content-assets/stt/realtime-stt/diagram-1.dark.svg","alt":"소리가 자막이 되기까지 다이어그램"}
 ---
 
-## 개요
+## 소리가 자막이 되기까지
 
-WebSocket으로 들어오는 오디오 청크를 **버퍼링 없이 실시간 전사**하는 파이프라인. `수신(WS) → 포맷 변환 → Silero VAD 발화 분할 → STT 워커 큐 → 결과 큐 → Redis 브로드캐스트 / DB 저장` 의 비동기 흐름으로 동작하며, 무거운 STT 추론이 async 이벤트 루프를 막지 않도록 **ThreadPoolExecutor로 오프로딩**했다.
+WebSocket 으로 들어오는 오디오 청크를 버퍼링 없이 실시간으로 전사한다. 세 가지가 걸렸다.
+
+- STT 추론은 CPU · GPU 를 붙잡는 동기 연산이라, 이벤트 루프에서 바로 돌리면 추론하는 동안 다른 연결의 송수신이 모두 멈춘다.
+- 들어오는 소리를 전부 STT 에 넣으면 침묵까지 연산해 자원을 낭비하고, 무음에서 없는 말(환각)이 생긴다.
+- VAD 가 발화 끝을 확정하기 전에 연결이 끊기면, 버퍼에 남은 마지막 발화가 전사되지 않고 사라진다.
+
+<figure class="diagram"><img src="/content-assets/stt/realtime-stt/diagram-1.light.svg" alt="소리가 자막이 되기까지 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/realtime-stt/diagram-1.dark.svg" alt="소리가 자막이 되기까지 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
+
+---
+
+## 추론은 스레드풀로 — 이벤트 루프를 비운다
+
+수신과 인식을 떼어 놓으려고 입력 큐와 결과 큐를 나누고, STT 추론은 스레드풀(워커 3개)로 넘긴다.
+
+<figure class="diagram"><img src="/content-assets/stt/realtime-stt/diagram-2.light.svg" alt="추론은 스레드풀로 — 이벤트 루프를 비운다 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/realtime-stt/diagram-2.dark.svg" alt="추론은 스레드풀로 — 이벤트 루프를 비운다 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
+
+---
+
+## 무음은 STT 전에 거른다 — 발화 분할 상태머신
+
+16kHz 오디오를 32ms 프레임마다 Silero VAD 에 넣어 음성 확률을 받고(임계값 0.5, 민감도 설정 3 이상이면 0.6), 상태머신으로 발화를 자른다. 무음 구간은 STT 로 가지 않는다.
+
+<figure class="diagram"><img src="/content-assets/stt/realtime-stt/diagram-3.light.svg" alt="무음은 STT 전에 거른다 — 발화 분할 상태머신 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/realtime-stt/diagram-3.dark.svg" alt="무음은 STT 전에 거른다 — 발화 분할 상태머신 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
+
+포맷마다 디코딩도 다르다. Raw PCM 은 NumPy 로 바로(가장 빠름), Opus · WebM 은 PyAV 스트리밍 파서로, 그 밖(MP3 등)은 Pydub 로 처리한다.
+
+---
+
+## 끊겨도 마지막 발화는 전사한다
+
+<figure class="diagram"><img src="/content-assets/stt/realtime-stt/diagram-4.light.svg" alt="끊겨도 마지막 발화는 전사한다 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/realtime-stt/diagram-4.dark.svg" alt="끊겨도 마지막 발화는 전사한다 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
+
+---
+
+## 결과
+
+**발화 분할 상태머신 테스트 17/17 통과** (pytest + hypothesis). 이 설계의 핵심 주장인 '무음은 STT 호출에서 빠진다'를 직접 검증했다.
 
 <div class="table-wrap">
 
-| **WebSocket 양방향** | **STT 워커 3**       | **Silero VAD**    | **2단 큐**   | **종료 플러시** |
-| ----------------- | ------------------ | ----------------- | ---------- | ---------- |
-| 청크 수신 + 결과 송신     | ThreadPoolExecutor | 16kHz·32ms·임계 0.5 | 입력 / 결과 분리 | 잔여 버퍼 패딩   |
+| **검증 내용**                                                   | **방식**                  |
+| ----------------------------------------------------------- | ----------------------- |
+| **무음만 들어오면 세그먼트가 한 번도 나오지 않는다**                             | hypothesis 300건 (임의 길이) |
+| **최소 발화 길이(5프레임)에 못 미치면 침묵이 와도 버려진다**                       | hypothesis 200건         |
+| 연속 음성 5프레임에 닿아야 발화로 인정한다                                    | 경계                      |
+| 침묵 20프레임에 세그먼트를 낸다 · 19프레임까지는 내지 않는다                        | 경계 양방향                  |
+| 세그먼트를 낸 뒤 상태를 완전히 초기화한다 (모델 내부 상태 포함)                       | —                       |
+| **프레임 크기가 다르면 무시하고 상태를 바꾸지 않는다** — 부분 청크가 발화 경계를 어긋나게 하지 않게 | 5가지 크기                  |
+| 종료 플러시는 최소 길이 조건을 무시하고 남은 버퍼를 낸다                            | 종료 유실 방지                |
+| 민감도 설정 3 이상 → 임계값 0.6                                       | 설정 변환                   |
 
 </div>
 
----
-
-## 왜 이 설계가 필요했는가 (Problem)
-
-<aside class="callout tone-scenario" data-icon="🎯">
-
-**시나리오 1 — 이벤트 루프 블로킹**\
-STT 추론은 CPU/GPU 동기 연산이다. async 이벤트 루프에서 직접 호출하면 추론하는 동안 다른 WebSocket의 수신·송신이 모두 멈춰 실시간성이 깨진다.
-
-</aside>
-
-<aside class="callout tone-scenario" data-icon="🔇">
-
-**시나리오 2 — 무음 구간까지 STT 호출**\
-들어오는 모든 오디오를 STT에 넣으면 침묵 구간도 연산해 자원을 낭비하고, 무음에서 환각(hallucination) 텍스트가 생성된다.
-
-</aside>
-
-<aside class="callout tone-scenario" data-icon="📤">
-
-**시나리오 3 — 연결 종료 시 마지막 발화 유실**\
-VAD가 발화 종료를 확정하기 전에 WebSocket이 끊기면, 버퍼에 남은 마지막 발화가 전사되지 않고 사라진다.
-
-</aside>
-
----
-
-## 처리 흐름
-
-<figure class="diagram"><img src="/content-assets/stt/realtime-stt/diagram-1.light.svg" alt="처리 흐름 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/realtime-stt/diagram-1.dark.svg" alt="처리 흐름 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
-
----
-
-## 핵심 설계 결정
-
-### 1. 입력/결과 큐 분리 + ThreadPoolExecutor 오프로딩
-
-<aside class="callout tone-orange" data-icon="⚡">
-
-수신과 인식을 디커플링하기 위해 **입력 큐·결과 큐를 분리**하고, STT 추론은 `run_in_executor`로 스레드풀(워커 3개)에 넘겨 이벤트 루프를 비운다.
-
-</aside>
-
-```text
-# STT 워커 — 입력 큐에서 꺼내 스레드풀에서 추론
-세그먼트 = await 입력 큐.get()
-텍스트 = await 이벤트 루프.run_in_executor(
-    스레드풀,  # ThreadPoolExecutor · 워커 3개
-    세그먼트 전사,  # Whisper 추론 (블로킹)
-    세그먼트, 직전 문맥 프롬프트,
-)
-await 결과 큐.put({텍스트, 세그먼트 번호, 시각})
-```
-
-### 2. Silero VAD 상태머신 발화 분할
-
-<aside class="callout tone-blue" data-icon="🎧">
-
-16kHz·32ms 프레임마다 Silero VAD로 음성 확률을 구하고, 상태머신으로 세그먼트를 자른다.
-
-- **발화 시작** — 연속 음성 5프레임(160ms) 이상
-- **발화 종료** — 침묵 20프레임(640ms)
-
-→ 무음 구간은 **STT 호출에서 제외**된다.
-
-</aside>
-
-```text
-# 프레임마다 음성 확률 판정 → 발화가 끝나면 세그먼트 반환
-음성 확률 = VAD 모델(프레임, 16kHz)
-if 음성 확률 >= 임계값:  # 0.5
-    발화 버퍼에 프레임 추가; 음성 프레임 수 += 1
-elif 발화 중 and 침묵 프레임 수 >= 최대 침묵:  # 20프레임
-    return 발화 버퍼 전체  # 발화 종료 → 세그먼트 반환
-```
-
-### 3. 포맷별 디코딩 전략
-
-<aside class="callout tone-blue" data-icon="🧩">
-
-실시간 청크는 코덱마다 디코딩 방식이 달라 **포맷별 전략을 분기**한다.
-
-- **Raw PCM** — NumPy 직처리(최속)
-- **Opus/WebM** — PyAV Parser 스트리밍
-- **그 외** — Pydub 폴백
-
-</aside>
-
-```text
-# 디코딩 전략 선택
-if 입력 포맷 in [PCM, raw]: return NumPy 직처리
-if 입력 포맷 in [Opus, WebM] and 스트리밍 포맷: return PyAV 파서
-return Pydub  # MP3 등 폴백
-```
-
-### 4. 연결 종료 시 버퍼 플러시
-
-<aside class="callout tone-green" data-icon="📤">
-
-연결이 끊기면(`WebSocketDisconnect`),\
-① 변환기의 잔여 버퍼를 flush\
-② 한 프레임에 못 미치면 **0 패딩으로 채워 강제 전사**\
-③ STT 워커 완료를 대기\
-→ <strong>마지막 발화 유실을 막는다.</strong>
-
-</aside>
-
-```text
-# 연결 종료 처리
-남은 오디오 = 변환기.flush()
-if 남은 오디오 and 길이 < 프레임 크기:
-    남은 오디오 += 0 바이트 × (프레임 크기 - 길이)  # 패딩
-파이프라인에 남은 오디오 투입  # 강제 전사
-최종 결과 = await STT 워커 완료 대기
-```
-
----
-
-## 설계가 만든 결과 (Result)
-
-<aside class="callout tone-blue" data-icon="📊">
-
-이 설계의 핵심 주장은 <strong>"무음 구간은 STT 호출에서 제외된다"</strong> 다. 자원 낭비와 환각(hallucination)을 동시에 막는 근거이므로, **상태머신 테스트로 검증**했다.
-
-</aside>
-
-### 검증 결과
-
-발화 분할 상태머신 테스트 · **17/17 통과** (pytest + hypothesis)
-
-<div class="table-wrap">
-
-| **검증 내용**                                   | **방식**                     |
-| ------------------------------------------- | -------------------------- |
-| **무음만 들어오면 세그먼트가 한 번도 나오지 않는다**             | hypothesis 300 케이스 (임의 길이) |
-| **최소 발화길이(5프레임) 미달은 침묵이 와도 버려진다**           | hypothesis 200 케이스         |
-| 연속 음성 5프레임에 도달해야 발화로 인정된다                   | 경계                         |
-| 침묵 20프레임 도달 시 세그먼트 반환 · **19프레임까지는 반환 안 함** | 경계 양방향                     |
-| 세그먼트 반환 후 상태 완전 초기화 (모델 내부 상태 포함)           | —                          |
-| **프레임 크기가 다르면 무시하고 상태를 바꾸지 않는다**            | 5가지 크기                     |
-| 종료 플러시는 최소길이 조건을 무시하고 남은 버퍼를 반환한다           | 종료 유실 방지                   |
-| 민감도 설정 3 이상 → 임계값 0.6 상향                    | 설정 변환                      |
-
-</div>
-
-<aside class="callout tone-green" data-icon="✅">
-
-앞의 두 불변식이 <strong>§2 Silero VAD 상태머신의 존재 이유</strong>를 직접 뒷받침한다 — 침묵과 짧은 잡음은 STT 로 흘러가지 않는다.\
-프레임 크기 검증 테스트는 부분 청크가 상태머신을 오염시켜 **발화 경계가 어긋나는 상황**을 막는다.
-
-</aside>
-
-### 모델은 스텁, 상태머신은 실물로 테스트했다
-
-<aside class="callout tone-evidence" data-icon="🧪">
-
-Silero 모델의 **정확도는 그 프로젝트의 책임**이고, 내가 만든 것은 **확률값을 받아 발화 경계를 자르는 상태머신**이다.\
-그래서 모델을 "프레임별 음성 확률을 테스트가 지정하는" 스텁으로 대체해 경계 조건을 **결정론적으로** 고정했다. 실제 모델을 로드하면 수백 MB 다운로드에 확률도 비결정적이라 경계를 검증할 수 없다.\
-단, **설정 상수는 하드코딩하지 않고** 실제 설정 파일을 경로 로드해 쓴다 — 운영 값이 바뀌면 테스트가 반응해야 하기 때문이다.
-
-</aside>
-
-## 배포 환경 실측 (2026-08-30)
-
-<aside class="callout tone-blue" data-icon="📡">
-
-**로컬이 아니라 실제 배포 서버에서 쟀다** — **GPU 없이** CPU 로만 추론하는 이미지다.\
-30초 한국어 음성을 <strong>실시간 배속(1.0x)</strong> 으로 WebSocket에 흘리고, 발화가 끝난 시점부터 **전사 결과가 DB 에 기록된 시각**까지를 자막 지연으로 판정했다.
-
-</aside>
-
-### 자막 지연 — 단일 세션
+<strong>모델은 스텁, 상태머신은 실물로 테스트했다.</strong> Silero 모델의 정확도는 그 프로젝트의 책임이고, 내가 만든 것은 확률값을 받아 발화 경계를 자르는 상태머신이다. 그래서 모델을 '프레임별 음성 확률을 테스트가 정하는' 스텁으로 바꿔 경계 조건을 결정론적으로 고정했다 — 실제 모델은 수백 MB 를 내려받아야 하고 확률도 비결정적이라 경계를 검증할 수 없다. 설정 상수는 하드코딩하지 않고 실제 설정 파일을 읽는다. 운영 값이 바뀌면 테스트가 반응해야 하기 때문이다.\
+<strong>배포 서버 실측 (2026-08-30)</strong> — 로컬이 아니라 GPU 없이 CPU 로만 추론하는 배포 서버에서 쟀다. 30초 한국어 음성을 실시간 배속(1.0x)으로 WebSocket 에 흘리고, 발화가 끝난 때부터 전사 결과가 DB 에 기록된 때까지를 자막 지연으로 판정했다(단일 세션).
 
 <div class="table-wrap">
 
@@ -210,18 +83,6 @@ Silero 모델의 **정확도는 그 프로젝트의 책임**이고, 내가 만�
 
 </div>
 
-<aside class="callout tone-green" data-icon="✅">
+<figure class="diagram"><img src="/content-assets/stt/realtime-stt/diagram-5.light.svg" alt="결과 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/realtime-stt/diagram-5.dark.svg" alt="결과 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
-<strong>자막 지연 5.1\~6.0초 (평균 약 5.5초) · 처리량은 실시간을 따라간다.</strong>\
-기록 시각 간격(6·7·5초)이 오디오 간격(6.11·6.37·4.67초)과 거의 같다 — 백로그가 쌓이지 않는다는 뜻이다. 즉 **지연은 처리량 부족이 아니라 일정한 오프셋**이다.
-
-</aside>
-
-## 검증 현황
-
-<aside class="callout tone-yellow" data-icon="📌">
-
-- **발화 분할 상태머신** — ✅ pytest + hypothesis 로 **17/17 통과** (위 Result 참조)
-- **성능** — ✅ 배포 서버에서 **자막 지연을 실측**했다 (위 「배포 환경 실측」 참조).
-
-</aside>
+<strong>자막 지연 5.1\~6.0초(평균 약 5.5초), 처리량은 실시간을 따라간다.</strong> 자막이 기록되는 간격(6 · 7 · 5초)이 오디오 간격(6.11 · 6.37 · 4.67초)과 거의 같다 — 구간이 쌓이지 않는다는 뜻이다. 지연은 처리량 부족이 아니라 일정한 오프셋이다.

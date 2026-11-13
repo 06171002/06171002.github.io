@@ -1,0 +1,10 @@
+stateDiagram-v2
+    state "무음 — 대기" as idle
+    state "발화 후보" as cand
+    state "발화 중" as talk
+    state "세그먼트 → STT" as emit
+    idle --> cand: 음성 확률 ≥ 임계값
+    cand --> idle: 5프레임(160ms)에 못 미치고 끊김 — 버린다
+    cand --> talk: 연속 음성 5프레임(160ms)
+    talk --> emit: 침묵 20프레임(640ms)
+    emit --> idle: 상태 초기화

@@ -1,13 +1,5 @@
-erDiagram
-    SO["고객 주문"]
-    SOL["주문 상품"]
-    PO["공급사 발주"]
-    POL["발주 상품"]
-    PAY["결제"]
-    DLV["배송지"]
-    SO ||--o{ SOL : "1:N 주문상품"
-    SO ||--o{ PO : "1:N 공급사별"
-    SO ||--|| PAY : "1:1 결제"
-    SO }o--|| DLV : "N:1 배송지"
-    PO ||--o{ POL : "1:N 발주상품"
-    POL }o--|| SOL : "N:1 원본상품"
+flowchart LR
+    cart["장바구니<br/>공급사 A · B · C 상품"] --> so["고객 주문 (SO) 1건<br/>결제 · 배송지 · 주문 상태"]
+    so --> pa["공급사 A 발주 (PO)<br/>출고 완료"]
+    so --> pb["공급사 B 발주 (PO)<br/>재고 부족 · 취소"]
+    so --> pc["공급사 C 발주 (PO)<br/>처리 중"]

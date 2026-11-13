@@ -1,7 +1,14 @@
-flowchart LR
-    A["요청 접수"] -->|"승인"| B["설정 대기"]
-    B -->|"최종승인"| C["완료"]
-    A -->|"반려"| D["반려"]
-    D -->|"재신청"| E["재요청"]
-    E -->|"승인"| B
-    E -->|"반려"| D
+stateDiagram-v2
+    state "요청 접수" as req
+    state "설정 대기 — 고객사만" as wait
+    state "완료" as done
+    state "반려" as rej
+    state "재요청" as re
+    req --> wait: 고객사 승인
+    wait --> done: 최종승인
+    req --> done: 공급사 승인 · 초대 매칭 자동승인
+    req --> rej: 반려
+    rej --> re: 재신청
+    re --> wait: 고객사 승인
+    re --> done: 공급사 승인
+    re --> rej: 반려

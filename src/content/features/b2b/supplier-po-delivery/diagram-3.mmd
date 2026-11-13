@@ -1,12 +1,4 @@
-flowchart TB
-    subgraph flow["발주 → 출고"]
-        direction LR
-        po["발주 접수<br/>PO라인은 SKU로 합쳐 받는다"] --> al["① 출고 할당기<br/>출고 1건 → 주문라인 1:1"] --> inv["②③ 운송장<br/>엑셀 일괄 · 합배송 전파"] --> ing["배송중"]
-    end
-    subgraph close["배송완료"]
-        direction LR
-        hand["공급사 · 관리자 수기"] --> done["⑥ 공통 완료 처리기<br/>5단계를 한 트랜잭션으로"]
-        track["⑦ 배송추적 배치<br/>외부 조회는 트랜잭션 밖"] --> done
-        done --> fin["배송완료 · 입고검수<br/>주문 상태 동기화"]
-    end
-    flow --> close
+flowchart LR
+    rep["대표 배송건<br/>운송장 입력"] --> key{"같은 번들키 ·<br/>'준비' 상태인 형제"}
+    key --> b1["형제 배송건<br/>같은 운송장"]
+    key --> b2["형제 배송건<br/>같은 운송장"]

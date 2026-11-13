@@ -1,11 +1,16 @@
-flowchart LR
-    A["가입 요청<br>요청 접수"] --> B["요청 이력<br>상태 이력 저장"]
-    A -->|"승인"| C["기업 마스터 생성"]
-    C --> D["고객사 정보"]
-    C --> E["공급사 정보"]
-    C --> F["여신 정보"]
-    C --> G["정산 정보"]
-    C --> H["서비스 구독"]
-    C --> I["권한그룹 복제"]
-    C -->|"최종승인"| J["슈퍼관리자 생성"]
-    J --> K["슈퍼관리자 권한"]
+sequenceDiagram
+    participant tx as 승인 트랜잭션
+    participant iam as 계정 서비스 (IAM)
+    participant db as DB
+    rect rgba(220, 80, 70, 0.14)
+        Note over tx,db: 계정을 먼저 만들면
+        tx->>iam: 계정 생성 · 따로 커밋된다
+        tx-->>db: 기업 · 권한 생성 중 실패 → DB 만 롤백
+        Note over tx,db: 고아 계정이 아이디를 선점 → 재시도가 영원히 막힌다
+    end
+    rect rgba(60, 160, 90, 0.14)
+        Note over tx,db: 지금 — 계정 생성은 트랜잭션의 맨 마지막
+        tx->>db: 기업 · 정보 · 권한 생성
+        tx->>iam: 계정 생성
+        Note over tx,db: 앞 단계가 실패하면 계정까지 가지 않는다
+    end

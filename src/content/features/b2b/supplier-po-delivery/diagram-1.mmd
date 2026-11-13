@@ -1,11 +1,12 @@
-erDiagram
-    SO["주문"]
-    SOL["주문 라인"]
-    PO["발주"]
-    POL["발주 라인"]
-    POD["발주 배송(출고 1건)"]
-    SO ||--o{ PO : "공급사별 분리"
-    SOL ||--o| POL : "N:1 SKU 집계"
-    PO ||--o{ POL : "1:N"
-    POL ||--o{ POD : "1:N 분할출고"
-    SOL ||--o{ POD : "1:1 출고 재매칭"
+flowchart TB
+    subgraph flow["발주 → 출고"]
+        direction LR
+        po["발주 접수<br/>PO라인은 SKU로 합쳐 받는다"] --> al["① 출고 할당기<br/>출고 1건 → 주문라인 1:1"] --> inv["②③ 운송장<br/>엑셀 일괄 · 합배송 전파"] --> ing["배송중"]
+    end
+    subgraph close["배송완료"]
+        direction LR
+        hand["공급사 · 관리자 수기"] --> done["공통 완료 처리기<br/>5단계를 한 트랜잭션으로"]
+        track["배송추적 배치<br/>외부 조회는 트랜잭션 밖"] --> done
+        done --> fin["배송완료 · 입고검수<br/>주문 상태 동기화"]
+    end
+    flow --> close

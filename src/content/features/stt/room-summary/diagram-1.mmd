@@ -1,12 +1,8 @@
-stateDiagram-v2
-    state "진행 중" as s1
-    state "요약 중" as s2
-    state "완료" as s3
-    state "실패" as s4
-    [*] --> s1: 방 생성
-    s1 --> s2: 전원 완료 (준비됨)
-    s1 --> s4: 전원 실패
-    s2 --> s3: 통합 요약 저장
-    s2 --> s4: 요약 실패 (재시도 소진)
-    s3 --> [*]
-    s4 --> [*]
+flowchart LR
+    subgraph room["방 하나 — 작업은 참가자마다 (1:N)"]
+        direction TB
+        p1["참가자 A<br/>WebSocket · 전사 작업"]
+        p2["참가자 B<br/>WebSocket · 전사 작업"]
+        p3["참가자 C<br/>WebSocket · 전사 작업"]
+    end
+    room -->|"전원 종료 · 준비됨"| sum["참가자별 대화록을 이어 붙여<br/>LLM 통합 요약 하나"]

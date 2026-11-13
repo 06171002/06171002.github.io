@@ -155,6 +155,9 @@ export async function renderDiagram(
             fontFamily: FONT_FAMILY,
             htmlLabels: false,
             flowchart: { htmlLabels: false, wrappingWidth: 400 },
+            // 선 위 라벨의 바탕 사각형이 기본 반투명(0.5)이라 선이 글자를 가로질러 보인다 → 불투명하게.
+            // 상태 다이어그램은 '.edgeLabel .label rect' 로 따로 반투명을 주므로 같은 깊이로 덮는다
+            themeCSS: '.edgeLabel rect, .edgeLabel .label rect { opacity: 1; }',
         },
     });
     return new TextDecoder().decode(data);

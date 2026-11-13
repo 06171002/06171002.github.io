@@ -1,0 +1,10 @@
+flowchart LR
+    subgraph unit["개당 단가 축 — 쓰지 않는다"]
+        direction TB
+        u1["라인 합계를 개당 단가로 나눈다"] --> u2["단가 × 수량으로 되짚는다"] --> u3["나누어떨어지지 않으면<br/>+1원이 남는다"]
+    end
+    subgraph line["라인 합계 축 — 지금"]
+        direction TB
+        l1["라인 합계를 그대로 청구"] --> l2["공급가액 + 세액 = 구매사 결제액<br/>잔차 0 · 전량 취소 때 정확히 0"]
+    end
+    unit ~~~ line

@@ -1,10 +1,10 @@
-flowchart TB
+flowchart LR
     subgraph job["작업 흐름"]
-        direction LR
+        direction TB
         api["FastAPI"] -->|"작업 발행"| br["Redis 브로커"] --> wk["Celery 워커<br/>동기 태스크"] -->|"① asyncio.run"| pipe["async 파이프라인<br/>STT + 요약"] -->|"② NullPool"| db["작업 테이블에<br/>결과 직접 저장"]
     end
     subgraph obs["관측성"]
-        direction LR
-        log["③ 구조화 JSON 로그<br/>운영 JSON · 개발 컬러"] ~~~ err["④ 에러 로그 테이블<br/>실패 시 새 이벤트 루프로 기록"] ~~~ hc["④ 헬스체크<br/>DB · Redis · STT · LLM<br/>하나라도 실패면 503"]
+        direction TB
+        log["③ 구조화 JSON 로그<br/>운영 JSON · 개발 컬러"] ~~~ err["④ 에러 로그 테이블<br/>실패 시 새 이벤트 루프로 기록"] ~~~ hc["④ 헬스체크<br/>DB · Redis · STT · LLM 점검<br/>LLM 을 뺀 셋 중 하나라도 실패면 503"]
     end
     job -.-> obs

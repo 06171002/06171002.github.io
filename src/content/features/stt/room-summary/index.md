@@ -10,184 +10,49 @@ draft: false
 cover: null
 notionEditedAt: "2026-08-30"
 description: null
-leadFigure: {"light":"/content-assets/stt/room-summary/diagram-2.light.svg","dark":"/content-assets/stt/room-summary/diagram-2.dark.svg","alt":"자동 요약 트리거 흐름 다이어그램"}
+leadFigure: {"light":"/content-assets/stt/room-summary/diagram-3.light.svg","dark":"/content-assets/stt/room-summary/diagram-3.dark.svg","alt":"언제 요약할지 — 4상태 판정 다이어그램"}
 ---
 
-## 개요
+## 참가자마다 따로 전사하고, 요약은 방 하나로
 
-WebRTC 다자 화상회의에서 **참가자별 STT 작업을 방(room) 단위로 묶고**, 전원이 끝나면 전체 대화를 LLM으로 **통합 요약**하는 기능.\
-• **병렬 전사** — 각 참가자는 독립 WebSocket·작업으로 전사\
-• **자동 트리거** — 마지막 참가자 종료를 감지해 Celery로 요약\
-• **1:1 겸용** — 방 정보가 없으면 **같은 코드가 1:1 모드**로 동작한다.
+WebRTC 다자 화상회의에서 참가자별 STT 작업을 방 단위로 묶고, 전원이 끝나면 전체 대화를 LLM 으로 통합 요약한다. 참가자마다 말하는 속도와 끝나는 때가 다른데, 결과는 회의 전체를 아우르는 요약 하나여야 한다.
+
+<figure class="diagram"><img src="/content-assets/stt/room-summary/diagram-1.light.svg" alt="참가자마다 따로 전사하고, 요약은 방 하나로 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/room-summary/diagram-1.dark.svg" alt="참가자마다 따로 전사하고, 요약은 방 하나로 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
+
+- 참가자마다 독립 WebSocket · 작업으로 병렬 전사하고, 마지막 참가자의 종료를 감지해 Celery 로 요약한다. 방 정보가 없으면 같은 코드가 1:1 모드로 동작한다.
+- 같은 참가자의 작업이 이미 대기 · 처리 중이면 중복 접속으로 보고 409, 완료 · 실패면 재접속을 허용한다.
+
+<figure class="diagram"><img src="/content-assets/stt/room-summary/diagram-2.light.svg" alt="참가자마다 따로 전사하고, 요약은 방 하나로 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/room-summary/diagram-2.dark.svg" alt="참가자마다 따로 전사하고, 요약은 방 하나로 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
+
+---
+
+## 언제 요약할지 — 4상태 판정
+
+일부는 아직 말하고 있고 일부는 실패했을 수 있다. 섣불리 요약하면 대화가 빠지고, 영원히 안 하면 요약이 나오지 않는다. 그래서 참가자 작업이 끝날 때마다 진행 중 · 성공 · 실패 작업을 세어 네 상태 중 하나로 판정하고, **준비됨일 때만** 요약을 시작한다. 요약이 시작되면 방이 '요약 중'으로 넘어가 되돌릴 수 없다.
+
+<figure class="diagram"><img src="/content-assets/stt/room-summary/diagram-3.light.svg" alt="언제 요약할지 — 4상태 판정 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/room-summary/diagram-3.dark.svg" alt="언제 요약할지 — 4상태 판정 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
+
+- **요약 태스크는 최대 5회 재시도**하고, 들어올 때 준비 판정을 한 번 더 확인한다. 아직 준비가 안 됐으면 재시도로 미룬다(경쟁 조건 방어). 준비됐으면 참가자별 대화록을 '--- 참가자: 이름 ---' 구분자로 이어 붙여 LLM 통합 요약을 만들고 방에 저장한다.
+- 판정은 작업 종료 훅(`finally`)에서 불린다. 여기서 예외가 튀면 다른 후처리까지 말리므로, 조회가 실패하면 예외 대신 '조회 오류'라는 값을 돌려주고 호출부는 트리거하지 않는다.
+- 자동 트리거는 마지막 참가자 작업이 끝날 때, 수동 트리거는 요약 요청 API 로 한다. 정확한 성과 범위는 '방 단위 완료 판정 · 재시도 설계 + 통합 요약 생성'이다.
+
+---
+
+## 결과 — 요약 준비 판정 테스트 15/15
+
+pytest + hypothesis 로 검증했다.
 
 <div class="table-wrap">
 
-| **방–작업 1:N** | **4상태 판정**                    | **자동 트리거** | **Celery 재시도 5** | **1:1 겸용** |
-| ------------ | ----------------------------- | ---------- | ---------------- | ---------- |
-| 참가자별 작업      | 준비됨·미준비·전원 실패·작업 없음 (+ 조회 오류) | 전원 종료 감지   | 준비 안되면 재시도       | 방 정보 없음    |
+| **구분**    | **검증 내용**                                                                                         |
+| --------- | ------------------------------------------------------------------------------------------------- |
+| 상태        | 4상태 전수 — 작업 없음 / 미준비(보류 3조합) / 전원 실패 / 준비됨(성공 3조합) · 일부 실패해도 성공이 있으면 준비됨(한 명 실패로 전체 요약을 포기하지 않는다) |
+| **불변식 ①** | **진행 중인 작업이 있으면 어떤 조합에서도 준비됨이 아니다** (500건)                                                        |
+| **불변식 ②** | **준비됨이면 반드시 성공한 작업이 있다** (500건)                                                                   |
+| 불변식       | 집계가 서로 모순된 값이어도 정의된 상태만 돌려준다 (300건)                                                               |
+| 방어 · 격리   | 집계 키가 일부 빠져도 판정이 깨지지 않는다(없는 키는 0) · 조회가 실패하면 '조회 오류'를 돌려주고 예외를 밖으로 던지지 않는다                        |
+| 호환        | 기존 준비 여부 함수는 준비됨일 때만 참                                                                            |
 
 </div>
 
----
-
-## 왜 이 설계가 필요했는가 (Problem)
-
-<aside class="callout tone-scenario" data-icon="👥">
-
-**시나리오 1 — 참가자별 독립 처리 + 하나의 요약**\
-참가자마다 말하는 속도·종료 시점이 다른데, 결과는 회의 전체를 아우르는 **하나의 통합 요약**이어야 한다.
-
-</aside>
-
-<aside class="callout tone-scenario" data-icon="⏱️">
-
-**시나리오 2 — "언제 요약할지" 판정**\
-일부는 진행 중, 일부는 실패일 수 있다.
-
-- **섣불리 요약하면** — 대화가 누락된다
-- **영원히 안 하면** — 요약이 안 나온다
-
-</aside>
-
-<aside class="callout tone-scenario" data-icon="🔁">
-
-**시나리오 3 — 중복 참가·재접속**\
-같은 참가자가 두 번 들어오거나, 끊겼다 재접속하는 경우를 구분해야 한다.
-
-</aside>
-
----
-
-## 방 상태 머신
-
-<figure class="diagram"><img src="/content-assets/stt/room-summary/diagram-1.light.svg" alt="방 상태 머신 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/room-summary/diagram-1.dark.svg" alt="방 상태 머신 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
-
----
-
-## 핵심 설계 결정
-
-### 1. 방–참가자–작업 구조 + 중복 참가 차단
-
-<aside class="callout tone-orange" data-icon="🗂️">
-
-방(헤더) ― 작업(방 · 참가자) **1:N** 구조.
-
-- **같은 참가자의 작업이 이미 대기·처리 중이면** — 중복 접속으로 보고 **409 Conflict**
-- **완료·실패면** — 재접속을 허용한다
-
-</aside>
-
-```text
-# 스트림 작업 생성 — 중복 참가 가드
-기존 = await 같은 방의 같은 참가자 작업 조회(방, 참가자)
-if 기존 and 기존 상태 in [대기, 처리 중]:
-    raise 409 Conflict  # 이미 이 방에 참가 중
-```
-
-### 2. 4상태 완료 판정
-
-<aside class="callout tone-blue" data-icon="🚦">
-
-준비 판정이 진행 중·성공·실패 작업을 집계해 **준비됨 / 미준비 / 전원 실패 / 작업 없음** 중 하나를 반환한다(조회가 실패하면 '조회 오류').\
-→ **준비됨일 때만** 방을 '요약 중'으로 바꾸고 Celery 태스크를 발행한다.
-
-</aside>
-
-```text
-# 판정 후 트리거
-판정 = await 방 요약 준비 판정(방)
-if 판정 == 준비됨:
-    await 방 상태 갱신(방, 요약 중)
-    요약 태스크.delay(방)  # Celery 트리거
-elif 판정 == 전원 실패:
-    await 방 상태 갱신(방, 실패)
-```
-
-### 3. Celery 재시도 + 진입 시 안전 재확인
-
-<aside class="callout tone-green" data-icon="🔂">
-
-요약 태스크는 최대 5회까지 재시도하고, **진입할 때 준비 판정을 한 번 더 확인**한다.
-
-- **아직 준비 안 됐으면** — Celery 재시도로 미룬다 (경쟁 조건 방어)
-- **준비됐으면** — 참가자별 대화록을 구분자로 결합해 LLM 통합 요약을 만들고 방에 저장한다
-
-</aside>
-
-```text
-# 방 요약 태스크 (최대 재시도 5)
-if 판정 != 준비됨:
-    raise 재시도(f"방 미준비: {판정}")  # 경쟁 조건 방어
-대화록들 = await 완료된 참가자 대화록 조회(방)
-결합본 = 참가자마다 "--- 참가자: {이름} ---" + 대화록 을 이어 붙임
-요약 = await LLM 요약(결합본)
-await 방 통합 요약 저장(방, 요약)
-```
-
----
-
-## 설계가 만든 결과 (Result)
-
-<aside class="callout tone-scenario" data-icon="📊">
-
-시나리오 2(<strong>"언제 요약할지" 판정</strong>)를 4상태로 푼 것이 실제로 안전한지 **테스트로 검증**했다.\
-요약은 한 번 시작되면 방 상태가 '요약 중'으로 넘어가 <strong>되돌릴 수 없다.</strong>
-
-</aside>
-
-### 검증 결과
-
-요약 준비 판정 테스트 · **15/15 통과** (pytest + hypothesis)
-
-<div class="table-wrap">
-
-| **구분**                 | **검증 내용**                                          |
-| ---------------------- | -------------------------------------------------- |
-| 상태                     | 4상태 전수 — 작업 없음 / 미준비(보류 3조합) / 전원 실패 / 준비됨(성공 3조합) |
-| 상태                     | 일부 실패해도 성공이 있으면 준비됨 — 한 명 실패로 전체 요약을 포기하지 않는다      |
-| <strong>★ 불변식</strong> | **진행 중인 작업이 있으면 어떤 조합에서도 준비됨이 아니다** (500 케이스)      |
-| <strong>★ 불변식</strong> | **준비됨이면 반드시 성공한 작업이 존재한다** (500 케이스)               |
-| 불변식                    | 집계가 서로 모순된 값이어도 **정의된 상태만 반환**한다 (300 케이스)         |
-| 방어                     | 집계 키가 일부 누락돼도 판정이 깨지지 않는다 (없는 키는 0으로 본다)           |
-| 격리                     | 조회가 실패하면 '조회 오류' 반환 — **예외를 밖으로 전파하지 않는다**         |
-| 호환                     | 기존 준비 여부 함수는 준비됨일 때만 참                             |
-
-</div>
-
-### 두 불변식이 각각 다른 사고를 막는다
-
-<aside class="callout tone-orange" data-icon="🛡️">
-
-**① 진행 중이면 준비됨 불가** → 아직 말하고 있는 참가자의 대화가 빠진 채 요약이 만들어지는 것을 막는다. 시나리오 2 의 <em>"섣불리 요약하면 대화가 누락된다"</em> 에 대한 직접적 방어다.
-
-**② 준비됨이면 성공 작업 존재** → 성공 0건인데 요약을 시도해 **빈 대화록으로 LLM 을 호출**하는 것을 막는다.
-
-두 성질 모두 예시 테스트로는 조합을 덮을 수 없어 랜덤 500 케이스로 확인했다.
-
-</aside>
-
-### 조회 실패를 예외로 흘리지 않는 이유
-
-<aside class="callout tone-gray" data-icon="🔌">
-
-판정은 **작업 종료 훅**(`finally`)에서 호출된다. 여기서 예외가 튀면 다른 후처리까지 말린다.\
-그래서 조회 실패는 '조회 오류'라는 값으로 돌려주고, 호출부가 "트리거하지 않음"으로 처리한다. 이 성질을 테스트로 고정했다.
-
-</aside>
-
-## 자동 요약 트리거 흐름
-
-<figure class="diagram"><img src="/content-assets/stt/room-summary/diagram-2.light.svg" alt="자동 요약 트리거 흐름 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/room-summary/diagram-2.dark.svg" alt="자동 요약 트리거 흐름 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
-
-<aside class="callout tone-gray" data-icon="📌">
-
-**구현 범위**
-
-- **자동 트리거** — 마지막 참가자 작업 종료(`finally`)에서 호출
-- **수동 트리거** — 요약 요청 API 제공
-
-→ 정확한 성과 범위는 <strong>"방 단위 완료 판정·재시도 설계 + 통합 요약 생성"</strong>
-
-</aside>
-
----
+두 불변식은 각각 다른 사고를 막는다. **①**은 아직 말하고 있는 참가자의 대화가 빠진 채 요약이 만들어지는 것을, **②**는 성공이 0건인데 빈 대화록으로 LLM 을 부르는 것을 막는다. 둘 다 예시 테스트로는 조합을 덮을 수 없어 무작위 500건으로 확인했다.
