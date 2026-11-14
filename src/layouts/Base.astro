@@ -55,13 +55,16 @@ const imageUrl = new URL(image, Astro.site);
         <meta name="generator" content={Astro.generator} />
         {/* 본문 글꼴 — 빌드가 사이트에 쓰인 글자만 남긴 Pretendard 서브셋을 이 주소에 쓴다 (src/integrations/font-subset.ts) */}
         {/* 빌드 중에는 아직 없는 파일이라 Vite 가 주소를 찾다 경고하지 않도록 @font-face 는 is:inline 으로 둔다 */}
+        {/* font-display: optional — 첫 화면을 그린 뒤 도착한 글꼴로는 바꾸지 않는다. 한글이 더 넓은 대체 글꼴로 먼저 그린 뒤
+            바꾸면 키워드 칩 · 성과 제목의 줄바꿈이 달라져 화면이 밀렸다 (docs/design.md 11장). 늦은 첫 방문은 그 페이지만
+            시스템 글꼴이고, 받아 둔 글꼴은 다음 페이지부터 쓴다 */}
         <link rel="preload" href="/fonts/pretendard.woff2" as="font" type="font/woff2" crossorigin />
         <style is:inline>
             @font-face {
                 font-family: 'Pretendard Variable';
                 font-weight: 45 920;
                 font-style: normal;
-                font-display: swap;
+                font-display: optional;
                 src: url('/fonts/pretendard.woff2') format('woff2');
             }
         </style>

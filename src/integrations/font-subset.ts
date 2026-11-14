@@ -8,7 +8,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import subsetFont from 'subset-font';
 
-/** src/styles/global.css 의 @font-face 가 가리키는 주소 */
+/** src/layouts/Base.astro 의 @font-face · preload 가 가리키는 주소 */
 const FONT_PATH = '/fonts/pretendard.woff2';
 
 // 브라우저가 기본으로 켜는 기능만 남긴다 — ss · cv · tnum 같은 대체 글리프를 빼면 약 14% 작아진다.
