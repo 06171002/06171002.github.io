@@ -1,0 +1,9 @@
+sequenceDiagram
+    participant a as 처리 작업 A
+    participant p as 프로젝트 행
+    participant b as 처리 작업 B
+    a->>p: 업로드 상태 변경 → 외래 키 확인이 S 획득
+    b->>p: 업로드 상태 변경 → 외래 키 확인이 S 획득
+    a-->>p: 사용량 변경 → X 요청 · B 의 S 때문에 대기
+    b-->>p: 사용량 변경 → X 요청 · A 의 S 때문에 대기
+    Note over a,b: 서로 상대의 S 가 풀리기를 기다린다 → 교착, DB 가 한쪽을 롤백

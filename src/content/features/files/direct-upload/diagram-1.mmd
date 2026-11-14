@@ -1,0 +1,15 @@
+sequenceDiagram
+    participant b as 브라우저
+    participant a as 서비스 서버
+    participant f as 파일 서버
+    participant st as 저장소
+    a->>f: ① 업로드 주소 발급 (API 키)
+    f-->>a: 파일 ID · 서명된 주소
+    a-->>b: 주소 전달
+    b->>st: ② 파일을 직접 올림 — 검사 전 경로로
+    b->>a: 다 올렸다
+    a->>f: ③ 완료 알림
+    f->>st: 크기 · 앞부분만 읽어 먼저 거름
+    Note over f: 처리 중으로 바꾸고 작업 등록 — 한 트랜잭션
+    f->>st: ④ 작업자 — 전체 검사 · 이미지 처리 · 정식 경로에 다시 씀
+    a->>f: ⑤ 글을 저장할 때 확정

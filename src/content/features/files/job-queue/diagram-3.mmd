@@ -1,0 +1,11 @@
+sequenceDiagram
+    participant a as 작업자 A
+    participant q as 작업 기록
+    participant b as 작업자 B
+    a->>q: 잡을 때 무작위 임대 토큰을 적음
+    loop 임대 기한의 1/3 마다
+        a->>q: 토큰이 같을 때만 기한 연장
+    end
+    Note over a,q: 연장이 실패하면 임대를 잃은 것 — 기록 · 등록 · 삭제를 하지 않고 경고만 남긴다
+    b->>q: 회수된 뒤 새 토큰으로 잡음
+    a-->>q: 묵은 토큰으로 결과 기록 → 거부

@@ -1,0 +1,8 @@
+sequenceDiagram
+    participant a as 서버 A
+    participant l as 잠금 행
+    participant b as 서버 B
+    a->>l: 잠금 기한 < 지금 이면 기한 갱신 → 1행
+    b->>l: 같은 조건으로 갱신 → 0행
+    Note over a: A 만 이번 회차를 실행
+    Note over l: 잠금은 간격의 90% 동안 두고 풀지 않는다 — 다음 회차에 다시 다툰다

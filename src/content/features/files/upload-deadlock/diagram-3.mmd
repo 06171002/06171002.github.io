@@ -1,0 +1,12 @@
+sequenceDiagram
+    participant a as 처리 작업 A
+    participant p as 프로젝트 행
+    participant b as 처리 작업 B
+    a->>a: 자기 업로드 행 잠금 · 상태 확인
+    b->>b: 자기 업로드 행 잠금 · 상태 확인
+    a->>p: 사용량 변경 → X 획득
+    b-->>p: 사용량 변경 → X 요청 · 대기
+    a->>a: 상태 변경 — 외래 키 확인은 쥔 X 안에서 끝남
+    a->>p: 커밋 → X 해제
+    p-->>b: X 획득 → 이어서 진행
+    Note over a,b: 줄은 서지만 서로를 기다리지 않는다

@@ -1,0 +1,13 @@
+sequenceDiagram
+    participant a as 작업자 A
+    participant q as 작업 기록
+    participant b as 작업자 B
+    participant st as 저장소
+    a->>q: 작업을 잡음 · 임대 기한 기록
+    Note over a: 처리가 길어짐 — 기한을 늘리지 않는다
+    q->>q: 기한 지남 → 대기로 회수
+    b->>q: 같은 작업을 다시 잡음
+    b->>st: 같은 키에 쓰고 파일 등록 → 성공
+    a->>q: 늦게 끝나 등록 → '처리 중 아님'
+    a->>st: 취소로 보고 자기 키를 지움 = B 가 등록한 파일의 내용
+    Note over a,st: 파일 기록은 남고 내용이 사라져, 없는 파일이 된다

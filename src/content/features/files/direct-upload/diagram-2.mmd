@@ -1,0 +1,14 @@
+stateDiagram-v2
+    state "올리는 중" as up
+    state "처리 중" as pr
+    state "준비됨 — 파일 기록이 생김" as ok
+    state "거절 — 올라온 내용은 지움" as rj
+    state "기한 지남" as ex
+    state "취소" as cn
+    [*] --> up: 주소 발급
+    up --> pr: 완료 알림 · 앞부분 확인 통과
+    pr --> ok: 검사 · 처리 통과
+    pr --> rj: 검사 · 처리에서 떨어짐
+    up --> ex: 기한 안에 완료 알림이 없음
+    up --> cn: 서비스가 삭제
+    pr --> cn: 서비스가 삭제

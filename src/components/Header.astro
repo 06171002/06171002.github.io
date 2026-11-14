@@ -34,3 +34,17 @@ const path = Astro.url.pathname;
         <ThemeToggle />
     </div>
 </header>
+
+<script>
+    // 좁은 화면의 메뉴는 가로로 넘치면 옆으로 밀어 본다. 지금 프로젝트의 알약이 오른쪽에서 잘리면
+    // 메뉴만 그만큼 밀어 보이게 한다 (페이지는 움직이지 않는다)
+    const nav = document.querySelector<HTMLElement>('.site-nav');
+    const current = nav?.querySelector<HTMLElement>('a[aria-current="page"]');
+    if (nav && current) {
+        const hidden =
+            current.getBoundingClientRect().right -
+            nav.getBoundingClientRect().right +
+            parseFloat(getComputedStyle(nav).paddingRight);
+        if (hidden > 0) nav.scrollLeft += hidden;
+    }
+</script>
