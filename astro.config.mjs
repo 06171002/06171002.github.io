@@ -10,11 +10,11 @@ export default defineConfig({
     // 늘어나는 양은 페이지당 gzip 약 4KB 다
     build: { inlineStylesheets: 'always' },
     integrations: [fontSubset()],
-    // 없어지거나 합쳐진 카드의 옛 주소 → 가장 가까운 곳 (정적 배포라 Astro 가 바로 넘기는 HTML 한 장을 만든다)
+    // 합쳐진 카드의 옛 주소 → 합친 카드 (정적 배포라 Astro 가 바로 넘기는 HTML 한 장을 만든다).
+    // 없어진 STT 카드 두 주소의 넘김은 2026-11-15 뺐다 — Chrome 이 넘김 대상 /stt/ 에 위험한 사이트 경고를 띄워
+    // 자동 이동 페이지가 의심됐다 (docs/design.md 4장)
     redirects: {
         '/llm/cost-accounting': '/llm/budget/',
-        '/stt/engine-abstraction': '/stt/',
-        '/stt/async-queue-observability': '/stt/',
     },
     markdown: {
         shikiConfig: { themes: { light: 'github-light', dark: 'github-dark' } },
