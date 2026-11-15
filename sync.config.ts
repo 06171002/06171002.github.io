@@ -35,10 +35,9 @@ export const features: FeatureEntry[] = [
     { project: 'stt', slug: 'async-queue-observability', order: 3, evidence: ['tested'], publish: true },
     { project: 'stt', slug: 'room-summary', order: 4, evidence: ['tested'], publish: true },
     { project: 'stt', slug: 'realtime-stt', order: 5, evidence: ['tested', 'measured'], publish: true },
-    // 사내 LLM 게이트웨이
-    { project: 'llm', slug: 'cost-accounting', order: 1, evidence: ['measured', 'tested'], publish: true },
+    // 사내 LLM 게이트웨이 — 요금 셈(cost-accounting)은 2026-11-15 예산 카드에 합쳤다. 옛 주소는 astro.config.mjs 의 redirects
+    { project: 'llm', slug: 'budget', order: 1, evidence: ['measured', 'tested'], publish: true },
     { project: 'llm', slug: 'tenant-isolation', order: 2, evidence: ['tested', 'measured'], publish: true },
-    { project: 'llm', slug: 'budget', order: 3, evidence: ['tested'], publish: true },
     // 사내 파일·이미지 서버
     { project: 'files', slug: 'upload-deadlock', order: 1, evidence: ['tested', 'measured'], publish: true },
     { project: 'files', slug: 'direct-upload', order: 2, evidence: ['tested', 'measured'], publish: true },

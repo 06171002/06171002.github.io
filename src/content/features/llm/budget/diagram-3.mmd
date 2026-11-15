@@ -1,5 +1,19 @@
-flowchart TD
-    q1["정산 사용액 + 이번 예약 > 한도?"] -->|"예"| hard["429 — 다시 보내지 말 것<br/>걸린 규칙과 다시 쓸 수 있는 때를 알린다"]
-    q1 -->|"아니오"| q2["정산 사용액 + 진행 중 예약 + 이번 예약 > 한도?"]
-    q2 -->|"예"| soft["429 — Retry-After 5초<br/>SDK 가 잠시 뒤 알아서 다시 보낸다"]
-    q2 -->|"아니오"| ok["규칙마다 예약하고 공급자 호출"]
+sequenceDiagram
+    participant a as 요청 A
+    participant g as 게이트웨이 · 한도 250토큰
+    participant b as 요청 B
+    participant c as 요청 C
+    rect rgba(220, 80, 70, 0.14)
+        Note over a,c: 세 요청 모두 최대 101토큰 — 끝난 사용액만 보면
+        a->>g: 사용액 0 → 통과
+        b->>g: 사용액 0 → 통과
+        c->>g: 사용액 0 → 통과
+        Note over a,c: 셋이 다 쓰면 303토큰 — 막아야 할 때 요청은 이미 공급자에 가 있다
+    end
+    rect rgba(60, 160, 90, 0.14)
+        Note over a,c: 지금 — 정산 사용액 + 진행 중 예약 + 이번 예약 ≤ 한도
+        a->>g: 0 + 0 + 101 ≤ 250 · 예약
+        b->>g: 0 + 101 + 101 ≤ 250 · 예약
+        c->>g: 0 + 202 + 101 > 250 · 429 잠시 뒤
+        Note over a,c: 공급자는 2번만 불린다 (통합 테스트)
+    end
