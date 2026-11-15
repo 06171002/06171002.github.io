@@ -9,7 +9,7 @@ const features = defineCollection({
     loader: glob({ pattern: '{features,drafts/features}/**/index.md', base: './src/content' }),
     schema: z.object({
         title: z.string(),
-        project: z.enum(['b2b', 'stt', 'llm', 'files']),
+        project: z.enum(['b2b', 'stt', 'llm', 'files', 'coupon']),
         order: z.number().int(),
         domain: z.string().nullable(),
         keywords: z.array(z.string()),

@@ -20,7 +20,7 @@ export type OgInput =
           tone: Tone;
       };
 
-export type Tone = 'b2b' | 'stt' | 'llm' | 'files' | 'accent';
+export type Tone = 'b2b' | 'stt' | 'llm' | 'files' | 'coupon' | 'accent';
 
 // 라이트 테마 토큰과 같은 값 (src/styles/tokens.css)
 const COLOR = {
@@ -33,6 +33,7 @@ const COLOR = {
     stt: '#6047b8',
     llm: '#0b6b77',
     files: '#9a4d0c',
+    coupon: '#b0246e',
 };
 
 const SITE = '06171002.github.io';

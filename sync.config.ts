@@ -1,7 +1,7 @@
 // 공개 설정 — 어떤 노션 카드를 어느 주소로 동기화할지 정한다 (docs/design.md 6장)
 // 노션 페이지 ID · 치환표 · 금지어는 공개 리포에 두지 않는다 → ../portfolio-private/sync.local.json (6.6)
 
-export type Project = 'b2b' | 'stt' | 'llm' | 'files';
+export type Project = 'b2b' | 'stt' | 'llm' | 'files' | 'coupon';
 export type Evidence = 'measured' | 'tested' | 'static' | 'estimated';
 
 export interface FeatureEntry {
@@ -43,4 +43,9 @@ export const features: FeatureEntry[] = [
     { project: 'files', slug: 'direct-upload', order: 2, evidence: ['tested', 'measured'], publish: true },
     { project: 'files', slug: 'job-queue', order: 3, evidence: ['tested'], publish: true },
     { project: 'files', slug: 'security-checklist', order: 4, evidence: ['tested'], publish: true },
+    // 포인트·쿠폰 엔진
+    { project: 'coupon', slug: 'discount-allocation', order: 1, evidence: ['tested'], publish: true },
+    { project: 'coupon', slug: 'partial-refund', order: 2, evidence: ['tested'], publish: true },
+    { project: 'coupon', slug: 'ledger-concurrency', order: 3, evidence: ['tested'], publish: true },
+    { project: 'coupon', slug: 'replay-and-trial', order: 4, evidence: ['tested'], publish: true },
 ];

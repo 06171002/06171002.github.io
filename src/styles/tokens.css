@@ -47,6 +47,7 @@
     --project-stt: light-dark(#6047b8, #a993ec);
     --project-llm: light-dark(#0b6b77, #6cc8d4);
     --project-files: light-dark(#9a4d0c, #f0a35e);
+    --project-coupon: light-dark(#b0246e, #f28dbd);
 
     /* 글꼴 · 크기 */
     --font-sans:

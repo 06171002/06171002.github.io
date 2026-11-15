@@ -1,0 +1,9 @@
+sequenceDiagram
+    participant s as 쇼핑몰
+    participant e as 엔진
+    s->>e: 결제 화면 — 할인 계산
+    s->>e: 주문 생성 — 선점
+    Note over s,e: 결재를 기다리면 선점 연장 · 반려나 결제 실패면 선점 취소
+    s->>e: 결제 확정 — 확정
+    s->>e: 부분 반품 · 전체 취소 — 취소와 반품
+    s->>e: 대사 — 주문 기록 목록

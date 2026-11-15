@@ -1,0 +1,9 @@
+sequenceDiagram
+    participant a as 회원 A 발급
+    participant c as 쿠폰 행
+    participant b as 회원 B 발급
+    a->>c: 카운터 행 넣기 → 외래 키 확인이 S 획득
+    b->>c: 카운터 행 넣기 → 외래 키 확인이 S 획득
+    a-->>c: 발급 수 늘리기 → X 요청 · B 의 S 때문에 대기
+    b-->>c: 발급 수 늘리기 → X 요청 · A 의 S 때문에 대기
+    Note over a,b: 서로 상대의 S 가 풀리기를 기다린다 → 교착

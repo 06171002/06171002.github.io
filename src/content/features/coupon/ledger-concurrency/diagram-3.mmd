@@ -1,0 +1,10 @@
+sequenceDiagram
+    participant a as 회원 A 발급
+    participant c as 쿠폰 행
+    participant b as 회원 B 발급
+    a->>c: 발급 수 늘리기 → X 획득
+    b-->>c: 발급 수 늘리기 → X 요청 · 대기
+    a->>a: 카운터 행 넣기 — 외래 키 확인은 쥔 X 안에서 끝남
+    a->>c: 커밋 → X 해제
+    c-->>b: X 획득 → 남은 수량이 있으면 발급
+    Note over a,b: 줄은 서지만 서로를 기다리지 않는다

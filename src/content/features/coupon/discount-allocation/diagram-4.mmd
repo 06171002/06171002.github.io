@@ -1,0 +1,8 @@
+flowchart LR
+    list["쓸 수 있는 쿠폰 목록"] --> calc["계산 모듈"]
+    pre["결제 화면 미리보기"] --> calc
+    hold["선점"] --> calc
+    hold --> snap["선점한 결과와 줄별 배분 저장"]
+    snap --> conf["확정 · 조회는 저장한 값 그대로"]
+    snap --> canc["취소 · 반품"]
+    canc --> calc

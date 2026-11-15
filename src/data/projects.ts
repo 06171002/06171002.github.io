@@ -33,6 +33,14 @@ export const projects = {
         role: '백엔드 설계',
         stack: ['Java', 'Spring Boot', 'MySQL', 'S3', 'Vue'],
     },
+    coupon: {
+        name: '포인트·쿠폰 엔진',
+        short: '쿠폰 엔진',
+        summary:
+            '쇼핑몰마다 새로 만들던 쿠폰 발급 · 할인 계산과 포인트 적립 · 사용 · 소멸을 한곳에서 맡는 엔진. 할인을 줄마다 나누는 계산 모듈과 동시 요청에도 어긋나지 않는 원장을 만들고, 회사가 운영 중인 쇼핑몰의 규칙으로 다시 계산해 붙일 수 있는지 확인했다.',
+        role: '백엔드 설계',
+        stack: ['Java', 'Spring Boot', 'MySQL', 'Testcontainers', 'Vue'],
+    },
 } as const;
 
 export type ProjectKey = keyof typeof projects;
