@@ -46,37 +46,43 @@
     --bg-red: light-dark(#f8dcd9, #46262a);
 }
 
-/* ---------- 레이아웃: 본문 + 오른쪽 고정 목차 ---------- */
+/* ---------- 레이아웃: 가운데 한 단(720px). 아주 넓으면 목차를 오른쪽 여백에 띄운다 ---------- */
 .article {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 3.5rem;
     max-width: var(--page-width);
     margin: 0 auto;
-    padding: clamp(2.5rem, 6vw, 4rem) var(--gutter) 0;
+    padding: 0 var(--gutter);
 }
 
 .article-main {
     min-width: 0;
-    max-width: var(--read-width);
 }
 
 .toc-aside {
     display: none;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1200px) {
     .article {
-        grid-template-columns: minmax(0, var(--read-width)) 15rem;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) var(--page-width) minmax(0, 1fr);
+        max-width: none;
+        padding: 0;
+    }
+
+    .article-main {
+        grid-column: 2;
+        padding: 0 var(--gutter);
     }
 
     .toc-aside {
         display: block;
+        grid-column: 3;
         position: sticky;
-        top: 6rem;
+        top: calc(var(--header-h) + 2rem);
         align-self: start;
-        max-height: calc(100vh - 7rem);
+        max-width: 14rem;
+        max-height: calc(100vh - var(--header-h) - 4rem);
+        margin: 6rem 0 0 1.5rem;
         overflow-y: auto;
     }
 
@@ -85,30 +91,20 @@
     }
 }
 
-/* ---------- 문서 머리 ---------- */
-.doc-title {
-    margin: 0 0 1rem;
-    font-size: clamp(1.875rem, 5vw, 2.75rem);
-    line-height: 1.2;
-    letter-spacing: -0.035em;
-}
-
-.doc-meta {
-    margin: 0 0 1rem;
-    color: var(--subtle);
-    font-family: var(--font-label);
-    font-size: 0.75rem;
-    letter-spacing: 0.06em;
-}
-
+/* ---------- 문서 머리 (가운데 제목 · 회색 한 줄은 global.css 의 .page-head) ---------- */
 .doc-head .badge-list,
 .doc-head .chip-list {
-    margin-bottom: 0.625rem;
+    justify-content: center;
+    margin-top: 0.75rem;
+}
+
+.doc-head .badge-list + .chip-list {
+    margin-top: 0.5rem;
 }
 
 /* ---------- 한눈에: 성과 제목 + 그림 + 문제 · 해결 · 결과 (docs/design.md 5.3). 그림만 있는 카드도 같은 상자 ---------- */
 .glance {
-    margin: 2rem 0 0;
+    margin: 0;
     padding: clamp(1.25rem, 3vw, 1.75rem);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
@@ -135,10 +131,10 @@
 
 .glance-headline {
     margin: 0 0 1.25rem;
-    font-size: clamp(1.1875rem, 2.5vw, 1.375rem);
+    font-size: 1rem;
     font-weight: 600;
-    line-height: 1.45;
-    letter-spacing: -0.025em;
+    line-height: 1.6;
+    letter-spacing: -0.005em;
 }
 
 /* 그림은 창틀(위 띠 + 점 세 개)에 담는다 — 제품 화면 캡처처럼 */
@@ -259,27 +255,30 @@ figure.glance-figure a:hover .glance-figure-more {
 }
 
 .prose h2 {
-    margin: 3.5rem 0 1rem;
-    font-size: clamp(1.4375rem, 3vw, 1.75rem);
-    letter-spacing: -0.03em;
+    margin: 3rem 0 0.75rem;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
 }
 
 .prose h3 {
-    margin: 2.5rem 0 0.75rem;
-    font-size: 1.25rem;
+    margin: 2.25rem 0 0.5rem;
+    font-size: 0.9375rem;
+    font-weight: 700;
 }
 
 .prose h4,
 .prose h5,
 .prose h6 {
     margin: 1.75rem 0 0.5rem;
-    font-size: 1.0625rem;
+    font-size: 0.9375rem;
 }
 
 .prose p,
 .prose ul,
 .prose ol {
     margin: 0.875rem 0;
+    line-height: 1.75;
 }
 
 .prose ul,
@@ -685,46 +684,39 @@ mark[class^='bg-'] {
     background: var(--bg-red);
 }
 
-/* ---------- 이전 / 다음 ---------- */
+/* ---------- 이전 / 다음: 가는 선 사이 글자 링크 ---------- */
 .pager {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
-    gap: 0.75rem;
+    gap: 0 1.5rem;
     margin: 4rem 0 0;
-    padding: 2rem 0 0;
+    padding: 0;
     border-top: 1px solid var(--border);
 }
 
 .pager a {
     display: block;
-    padding: 1rem 1.25rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    background: var(--surface);
+    padding: 1.25rem 0;
     color: var(--fg);
-    font-weight: 600;
-    letter-spacing: -0.02em;
+    font-weight: 500;
+    line-height: 1.6;
     text-decoration: none;
-    transition:
-        border-color 0.15s ease,
-        box-shadow 0.15s ease;
+    transition: opacity 0.2s ease;
 }
 
 .pager a:hover {
-    border-color: var(--border-strong);
-    box-shadow: var(--shadow);
-    color: var(--accent);
+    color: var(--fg);
+    opacity: 0.6;
 }
 
 .pager span {
     display: block;
     margin-bottom: 0.25rem;
-    color: var(--subtle);
+    color: var(--muted);
     font-family: var(--font-label);
-    font-size: 0.6875rem;
+    font-size: 0.78125rem;
     font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+    letter-spacing: 0.02em;
 }
 
 .pager .next {

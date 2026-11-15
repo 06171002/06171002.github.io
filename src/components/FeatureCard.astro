@@ -1,6 +1,6 @@
 ---
 import type { CollectionEntry } from 'astro:content';
-import EvidenceBadges from './EvidenceBadges.astro';
+import { evidenceLabel } from '../data/projects';
 
 interface Props {
     entry: CollectionEntry<'features'>;
@@ -8,126 +8,20 @@ interface Props {
 
 const { entry } = Astro.props;
 const data = entry.data;
-// 노션 커버 이미지는 쓰지 않는다 — 흰 카드에 프로젝트 색 점 · 번호 · 도메인만 둔다 (다크 모드에서도 같은 모양).
+// 가는 선 목록의 한 줄 — 왼쪽 제목(+ 대표 사례의 성과 제목), 오른쪽 근거 종류.
 // API 수 · 테이블 수는 프로젝트 내부 정보라 싣지 않는다 (docs/design.md 6.5)
-const number = String(data.order).padStart(2, '0');
-const topLabel = [number, data.domain].filter(Boolean).join(' · ');
-const keywords = data.keywords.slice(0, 3);
+const evidence = data.evidence.map((kind) => evidenceLabel[kind]).join(' · ');
 ---
 
-<li class={`feature-card project-${data.project}`}>
+<li>
     <a href={`/${data.project}/${entry.id}/`}>
-        <p class="feature-top">
-            <span class="feature-dot" aria-hidden="true"></span>
-            <span class="label">{topLabel}</span>
-        </p>
-        <h3 class="feature-title">
-            {data.title}
-            {data.draft && <span class="draft-tag">초안</span>}
-        </h3>
-        {/* 대표 사례 카드만 성과 제목이 있다 — 목록에서 무게가 드러나게 */}
-        {data.glance && <p class="feature-headline">{data.glance.headline}</p>}
-        <div class="feature-foot">
-            <EvidenceBadges kinds={data.evidence} />
-            {keywords.length > 0 && <p class="feature-keywords">{keywords.join(' · ')}</p>}
-        </div>
+        <span class="row-info">
+            <span class="row-title">
+                {data.title}
+                {data.draft && <span class="draft-tag">초안</span>}
+            </span>
+            {data.glance && <span class="row-sub">{data.glance.headline}</span>}
+        </span>
+        {evidence && <span class="row-side">{evidence}</span>}
     </a>
 </li>
-
-<style>
-    .feature-card a {
-        display: flex;
-        flex-direction: column;
-        gap: 0.625rem;
-        height: 100%;
-        padding: 1.375rem 1.5rem 1.5rem;
-        border: 1px solid var(--border);
-        border-radius: var(--radius-lg);
-        background: var(--surface);
-        color: var(--fg);
-        text-decoration: none;
-        transition:
-            border-color 0.15s ease,
-            box-shadow 0.15s ease;
-    }
-
-    .feature-card a:hover {
-        border-color: var(--border-strong);
-        box-shadow: var(--shadow);
-    }
-
-    .feature-card a:hover .feature-title {
-        color: var(--accent);
-    }
-
-    .project-b2b {
-        --project-color: var(--project-b2b);
-    }
-
-    .project-stt {
-        --project-color: var(--project-stt);
-    }
-
-    .project-llm {
-        --project-color: var(--project-llm);
-    }
-
-    .project-files {
-        --project-color: var(--project-files);
-    }
-
-    .project-coupon {
-        --project-color: var(--project-coupon);
-    }
-
-    .feature-top {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        margin: 0;
-    }
-
-    .feature-top .label {
-        margin: 0;
-        color: var(--project-color);
-    }
-
-    .feature-dot {
-        width: 0.5rem;
-        height: 0.5rem;
-        border-radius: 50%;
-        background: var(--project-color);
-    }
-
-    .feature-title {
-        margin: 0;
-        font-size: 1.1875rem;
-        line-height: 1.4;
-        letter-spacing: -0.025em;
-        transition: color 0.15s ease;
-    }
-
-    .feature-headline {
-        margin: 0;
-        color: var(--muted);
-        font-size: var(--text-sm);
-        line-height: 1.6;
-    }
-
-    /* 배지 · 키워드는 카드 아래로 붙인다 — 이웃 카드와 높이가 달라도 아래 줄이 맞는다 */
-    .feature-foot {
-        display: flex;
-        flex-direction: column;
-        gap: 0.625rem;
-        margin-top: auto;
-        padding-top: 0.5rem;
-    }
-
-    /* 키워드는 한글이 많아 고정폭 글꼴이면 띄어쓰기가 벌어진다 — 본문 글꼴로 작게 */
-    .feature-keywords {
-        margin: 0;
-        color: var(--subtle);
-        font-size: var(--text-xs);
-        line-height: 1.6;
-    }
-</style>

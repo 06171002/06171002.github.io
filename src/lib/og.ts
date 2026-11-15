@@ -25,10 +25,10 @@ export type Tone = 'b2b' | 'stt' | 'llm' | 'files' | 'coupon' | 'accent';
 // 라이트 테마 토큰과 같은 값 (src/styles/tokens.css)
 const COLOR = {
     bg: '#ffffff',
-    fg: '#17191d',
-    muted: '#5b6270',
-    border: '#e4e7ec',
-    accent: '#2457d6',
+    fg: '#1a1a1a',
+    muted: '#616161',
+    border: '#ebebeb',
+    accent: '#078414',
     b2b: '#497622',
     stt: '#6047b8',
     llm: '#0b6b77',

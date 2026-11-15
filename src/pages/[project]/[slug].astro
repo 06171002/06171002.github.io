@@ -48,7 +48,7 @@ const toc = headings.filter((heading) => heading.depth === 2);
 const basis = new Intl.DateTimeFormat('ko-KR', { dateStyle: 'long', timeZone: 'Asia/Seoul' }).format(
     data.notionEditedAt
 );
-const meta = [data.domain, `${basis} 기준`].filter(Boolean);
+const meta = [project.short, data.domain, `${basis} 기준`].filter(Boolean);
 // '한눈에' — 성과 제목 + 그림 + 문제 · 해결 · 결과 (docs/design.md 5.3). 문장은 대표 사례만, 그림은 어느 카드나 가질 수 있다
 const glance = data.glance ?? null;
 const leadFigure = data.leadFigure ?? null;
@@ -73,16 +73,9 @@ const description =
     <main id="main" class="article">
         <article class="article-main">
             {data.draft && <p class="draft-banner">초안 · 공개 점검 전이라 배포되지 않는 페이지입니다</p>}
-            <header class="doc-head">
-                <nav class="crumbs" aria-label="경로">
-                    <a href="/">홈</a>
-                    <span class="sep" aria-hidden="true">
-                        /
-                    </span>
-                    <a href={`/${data.project}/`}>{project.short}</a>
-                </nav>
-                <h1 class="doc-title">{data.title}</h1>
-                <p class="doc-meta">{meta.join(' · ')}</p>
+            <header class="doc-head page-head">
+                <h1 class="page-title">{data.title}</h1>
+                <p class="page-meta">{meta.join(' · ')}</p>
                 <EvidenceBadges kinds={data.evidence} />
                 {data.keywords.length > 0 && (
                     <ul class="chip-list" aria-label="핵심 키워드">
@@ -96,7 +89,7 @@ const description =
             {(glance || leadFigure) && (
                 <section class="glance" aria-labelledby="glance-title">
                     <h2 id="glance-title" class="eyebrow glance-label">
-                        At a glance · 한눈에
+                        At a glance
                     </h2>
                     {glance && <p class="glance-headline">{glance.headline}</p>}
                     {/* 첫 화면에 있는 그림이라 지연 로딩하지 않는다. 좁은 화면에서는 글자가 작아지므로 원본을 새 탭으로 연다 */}
@@ -172,7 +165,7 @@ const description =
 
         {toc.length > 1 && (
             <aside class="toc-aside toc" aria-label="목차">
-                <p class="toc-title label">Contents · 목차</p>
+                <p class="toc-title label">Contents</p>
                 <ol>
                     {toc.map((heading) => (
                         <li>

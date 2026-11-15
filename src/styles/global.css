@@ -5,16 +5,10 @@
     box-sizing: border-box;
 }
 
-/* 고정 헤더 높이만큼 앵커 위치를 내린다 — 좁은 화면은 메뉴가 둘째 줄이라 헤더가 더 높다 */
+/* 고정 헤더 높이만큼 앵커 위치를 내린다 */
 html {
     -webkit-text-size-adjust: 100%;
-    scroll-padding-top: 8.5rem;
-}
-
-@media (min-width: 720px) {
-    html {
-        scroll-padding-top: 6rem;
-    }
+    scroll-padding-top: calc(var(--header-h) + 1.5rem);
 }
 
 body {
@@ -22,12 +16,13 @@ body {
     background: var(--bg);
     color: var(--fg);
     font-family: var(--font-sans);
-    font-size: 1rem;
+    font-size: 0.9375rem;
     line-height: 1.7;
-    letter-spacing: -0.01em;
+    letter-spacing: 0;
     word-break: keep-all;
     overflow-wrap: anywhere;
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
 }
 
 h1,
@@ -35,8 +30,8 @@ h2,
 h3,
 h4 {
     font-weight: 600;
-    line-height: 1.25;
-    letter-spacing: -0.025em;
+    line-height: 1.45;
+    letter-spacing: -0.005em;
 }
 
 a {
@@ -71,7 +66,7 @@ samp {
     }
 }
 
-/* ---------- 레이아웃 ---------- */
+/* ---------- 레이아웃: 가운데 한 단 ---------- */
 .container {
     max-width: var(--page-width);
     margin: 0 auto;
@@ -82,7 +77,7 @@ samp {
     position: absolute;
     top: -3rem;
     left: var(--gutter);
-    z-index: 10;
+    z-index: 60;
     padding: 0.5rem 0.75rem;
     border-radius: var(--radius-s);
     background: var(--fg);
@@ -93,68 +88,44 @@ samp {
     top: 0.5rem;
 }
 
-/* ---------- 헤더: 반투명 바탕 + 아래 가는 선. 좁은 화면에서는 메뉴가 둘째 줄의 가로 스크롤 알약이 된다 ---------- */
+/* ---------- 헤더: 바탕 없이 블러만 깐 띠 — 왼쪽 글자 메뉴, 오른쪽 아이콘 ---------- */
 .site-header {
     position: sticky;
     top: 0;
-    z-index: 5;
-    border-bottom: 1px solid var(--border);
-    background: color-mix(in srgb, var(--bg) 82%, transparent);
-    backdrop-filter: saturate(1.4) blur(12px);
-}
-
-.header-inner {
+    z-index: 50;
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    gap: 0.625rem 1rem;
-    min-height: 4rem;
-    padding-top: 0.75rem;
+    gap: 1rem;
+    height: var(--header-h);
+    padding: 0 0.75rem;
+    background: color-mix(in srgb, var(--bg) 60%, transparent);
+    backdrop-filter: blur(10px) saturate(1.4);
+    -webkit-backdrop-filter: blur(10px) saturate(1.4);
 }
 
-.brand {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-right: auto;
-    color: var(--fg);
-    text-decoration: none;
+@media (min-width: 640px) {
+    .site-header {
+        padding: 0 1.25rem 0 0.625rem;
+    }
 }
 
-.brand:hover {
-    color: var(--fg);
-}
-
-.brand-name {
-    font-size: 1.0625rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-}
-
-.brand-sub {
-    display: none;
-    padding-left: 0.75rem;
-    border-left: 1px solid var(--border-strong);
-    color: var(--subtle);
-    font-family: var(--font-label);
-    font-size: 0.6875rem;
-    letter-spacing: 0.16em;
-    line-height: 1.2;
-    text-transform: uppercase;
-}
-
+/* 메뉴가 넘치면 메뉴만 옆으로 민다 (아이콘은 오른쪽에 그대로). 오른쪽 끝을 흐려 더 있다는 걸 보인다 —
+   넓은 화면에서는 메뉴 칸 오른쪽이 빈자리라 흐림이 글자에 닿지 않는다 */
 .site-nav {
-    order: 3;
-    width: calc(100% + var(--gutter) * 2);
-    margin: 0 calc(var(--gutter) * -1);
-    padding: 0 var(--gutter) 0.75rem;
+    flex: 1;
+    min-width: 0;
     overflow-x: auto;
     scrollbar-width: none;
+    mask-image: linear-gradient(to right, #000 calc(100% - 1.5rem), transparent);
+}
+
+.site-nav::-webkit-scrollbar {
+    display: none;
 }
 
 .site-nav ul {
     display: flex;
-    gap: 0.375rem;
+    gap: 0.125rem;
     margin: 0;
     padding: 0;
     list-style: none;
@@ -162,72 +133,67 @@ samp {
 
 .site-nav a {
     display: block;
-    padding: 0.3125rem 0.75rem;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    background: var(--surface);
-    color: var(--fg);
-    font-size: var(--text-xs);
+    padding: 0.375rem 0.625rem;
+    border-radius: var(--radius-s);
+    color: var(--muted);
+    font-size: var(--text-sm);
     font-weight: 500;
+    line-height: 1.5;
     white-space: nowrap;
     text-decoration: none;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
 }
 
-.site-nav a:hover,
+.site-nav a:hover {
+    background: var(--hover);
+    color: var(--fg);
+}
+
 .site-nav a[aria-current='page'] {
-    border-color: var(--accent);
     color: var(--accent);
 }
 
-@media (min-width: 720px) {
-    .header-inner {
-        padding-top: 0;
-    }
-
-    .brand-sub {
-        display: inline;
-    }
-
-    .site-nav {
-        order: 0;
-        width: auto;
-        margin: 0;
-        padding: 0;
-        overflow: visible;
-    }
-
-    .site-nav ul {
-        gap: 1.75rem;
-    }
-
-    .site-nav a {
-        padding: 0;
-        border: 0;
-        border-radius: 0;
-        background: none;
-        font-size: 0.9375rem;
-    }
-
-    .site-nav a[aria-current='page'] {
-        font-weight: 600;
-    }
+.header-actions {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 0.375rem;
 }
 
+.header-icon,
 .theme-toggle {
-    display: inline-grid;
+    display: grid;
     place-items: center;
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 2rem;
+    height: 2rem;
     padding: 0;
-    border: 1px solid var(--border-strong);
+    border: 0;
     border-radius: var(--radius-s);
-    background: var(--surface);
+    background: none;
     color: var(--muted);
     cursor: pointer;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
 }
 
+.header-icon:hover,
 .theme-toggle:hover {
+    background: var(--hover);
     color: var(--fg);
+}
+
+.header-icon svg,
+.theme-toggle svg {
+    display: block;
+}
+
+.header-divider {
+    width: 1px;
+    height: 0.875rem;
+    background: var(--border-strong);
 }
 
 .theme-toggle[data-state='dark'] .icon-moon,
@@ -235,156 +201,145 @@ samp {
     display: none;
 }
 
-/* ---------- 푸터 ---------- */
+/* ---------- 푸터: 위 가는 선 + 왼쪽 © · 오른쪽 링크 ---------- */
 .site-footer {
-    margin-top: var(--section-y);
-    padding: 2.5rem 0 3rem;
-    border-top: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--subtle);
-    font-size: var(--text-sm);
+    margin-top: 5rem;
 }
 
 .footer-inner {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
+    align-items: baseline;
     justify-content: space-between;
-    gap: 1rem 2rem;
+    gap: 1rem;
+    padding-top: 2.5rem;
+    padding-bottom: 3.75rem;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: var(--text-sm);
 }
 
-.footer-brand {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.75rem;
-    color: var(--fg);
-}
-
-.footer-brand .brand-sub {
-    display: inline;
+.footer-copy,
+.footer-links {
+    margin: 0;
 }
 
 .footer-links {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1.5rem;
-    margin: 0;
+    gap: 1.125rem;
 }
 
 .footer-links a {
     color: var(--muted);
     text-decoration: none;
+    transition: color 0.2s ease;
 }
 
 .footer-links a:hover {
-    color: var(--accent);
-}
-
-.footer-copy {
-    flex-basis: 100%;
-    margin: 0;
-    font-family: var(--font-label);
-    font-size: 0.75rem;
-    letter-spacing: 0.04em;
+    color: var(--fg);
 }
 
 /* ---------- 공통 부품 ---------- */
 
-/* 눈썹 문구: 앞에 짧은 선 + 고정폭 대문자 (예: —— PROJECTS · 프로젝트) */
-.eyebrow {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin: 0 0 1rem;
-    color: var(--accent);
-    font-family: var(--font-label);
-    font-size: 0.75rem;
-    font-weight: 500;
-    letter-spacing: 0.14em;
-    line-height: 1.4;
-    text-transform: uppercase;
-}
-
-.eyebrow::before {
-    content: '';
-    flex: none;
-    width: 1.5rem;
-    border-top: 1px solid currentColor;
-}
-
-/* 구간 머리: 눈썹 문구 → 큰 제목 → 설명 */
-.section-head {
-    max-width: var(--read-width);
-    margin-bottom: 2rem;
-}
-
-.section-title {
-    margin: 0;
-    font-size: clamp(1.75rem, 4vw, 2.5rem);
-    letter-spacing: -0.03em;
-}
-
-.section-desc {
-    margin: 0.75rem 0 0;
-    color: var(--muted);
-    font-size: 1.0625rem;
-}
-
-/* 작은 고정폭 라벨 (카드 위 · 표 머리 · 목차 제목) */
+/* 작은 회색 라벨 — 구간 머리 · 카드 위 · 표 머리 · 목차 제목 */
 .label,
-.section-label {
-    margin: 0 0 0.75rem;
-    color: var(--subtle);
+.section-label,
+.eyebrow {
+    margin: 0 0 0.875rem;
+    color: var(--muted);
     font-family: var(--font-label);
-    font-size: 0.75rem;
+    font-size: 0.78125rem;
     font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
 }
 
-/* 버튼 */
+/* 가는 선 목록 — 왼쪽 제목(+ 회색 한 줄) · 오른쪽 회색 정보, 줄 사이 가는 선 */
+.row-list {
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--border);
+    list-style: none;
+}
+
+.row-list > li > a,
+.row-list > li > .row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9375rem 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--fg);
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+}
+
+.row-list > li > a:hover {
+    color: var(--fg);
+    opacity: 0.6;
+}
+
+.row-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+.row-title {
+    font-weight: 500;
+    line-height: 1.6;
+}
+
+.row-sub {
+    color: var(--muted);
+    font-size: var(--text-xs);
+    line-height: 1.6;
+}
+
+.row-side {
+    flex: none;
+    color: var(--muted);
+    font-size: var(--text-sm);
+    white-space: nowrap;
+}
+
+/* 버튼 — 옅은 회색 알약 */
 .btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.6875rem 1.25rem;
-    border: 1px solid transparent;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    border: 0;
     border-radius: var(--radius-s);
-    font-size: 0.9375rem;
-    font-weight: 600;
+    font-size: var(--text-sm);
+    font-weight: 500;
     line-height: 1.5;
     text-decoration: none;
     transition:
         background-color 0.15s ease,
-        border-color 0.15s ease;
+        color 0.15s ease;
 }
 
 .btn-primary {
-    background: var(--accent);
-    color: var(--on-accent);
+    background: var(--fg);
+    color: var(--bg);
 }
 
 .btn-primary:hover {
-    background: var(--accent-hover);
-    color: var(--on-accent);
+    background: color-mix(in srgb, var(--fg) 82%, var(--bg));
+    color: var(--bg);
 }
 
 .btn-secondary {
-    border-color: var(--border-strong);
-    background: var(--surface);
+    background: var(--surface-strong);
     color: var(--fg);
 }
 
 .btn-secondary:hover {
-    border-color: var(--fg);
+    background: color-mix(in srgb, var(--fg) 10%, var(--bg));
     color: var(--fg);
-}
-
-/* 흰 표면 카드 */
-.card {
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    background: var(--surface);
 }
 
 .badge-list,
@@ -399,8 +354,8 @@ samp {
 
 .badge {
     display: inline-block;
-    padding: 0.0625rem 0.5625rem;
-    border-radius: 999px;
+    padding: 0.0625rem 0.5rem;
+    border-radius: 6px;
     font-size: 0.75rem;
     font-weight: 600;
     line-height: 1.6;
@@ -426,12 +381,14 @@ samp {
     color: var(--ev-estimated);
 }
 
+/* 칩 — 옅은 회색 바탕, 앞에 로고가 붙을 수 있다 (로고는 글자색 단색) */
 .chip {
-    display: inline-block;
-    padding: 0.125rem 0.6875rem;
-    border: 1px solid var(--border-strong);
-    border-radius: 999px;
-    background: var(--surface);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 6px;
+    background: var(--surface-strong);
     color: var(--muted);
     font-size: var(--text-xs);
     line-height: 1.7;
@@ -439,8 +396,14 @@ samp {
 }
 
 a.chip:hover {
-    border-color: var(--accent);
-    color: var(--accent);
+    color: var(--fg);
+}
+
+.chip-icon {
+    flex: none;
+    width: 0.8125rem;
+    height: 0.8125rem;
+    fill: currentColor;
 }
 
 .draft-banner,
@@ -462,27 +425,34 @@ a.chip:hover {
     font-size: 0.75rem;
 }
 
-/* 경로: 고정폭 · '/' 구분 */
-.crumbs {
-    margin: 0 0 1.5rem;
-    color: var(--subtle);
-    font-family: var(--font-label);
-    font-size: 0.75rem;
-    letter-spacing: 0.06em;
+/* 페이지 머리 — 가운데 정렬 제목 + 회색 한 줄 (프로젝트 · 기능 상세) */
+.page-head {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4rem 0 2.5rem;
+    text-align: center;
 }
 
-.crumbs a {
-    color: inherit;
-    text-decoration: none;
+.page-title {
+    margin: 0;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    line-height: 1.7;
+    letter-spacing: -0.01em;
 }
 
-.crumbs a:hover {
-    color: var(--accent);
+.page-meta {
+    margin: 0;
+    color: var(--muted);
+    font-size: var(--text-sm);
+    line-height: 1.6;
 }
 
-.crumbs .sep {
-    margin: 0 0.5rem;
-    opacity: 0.6;
+@media (min-width: 640px) {
+    .page-head {
+        padding-top: 6rem;
+    }
 }
 
 @page {

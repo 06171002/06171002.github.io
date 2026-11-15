@@ -1,5 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
+import { siGithub } from 'simple-icons';
 import { profile } from '../data/profile';
 import { projectKeys, projects } from '../data/projects';
 import ThemeToggle from './ThemeToggle.astro';
@@ -11,40 +12,56 @@ const path = Astro.url.pathname;
 ---
 
 <header class="site-header">
-    <div class="container header-inner">
-        <a class="brand" href="/">
-            <span class="brand-name">{profile.name}</span>
-            <span class="brand-sub" aria-hidden="true">
-                Backend · Portfolio
-            </span>
+    <nav class="site-nav" aria-label="사이트">
+        <ul>
+            <li>
+                <a href="/" aria-current={path === '/' ? 'page' : undefined}>
+                    {profile.name}
+                </a>
+            </li>
+            {available.map((key) => (
+                <li>
+                    <a href={`/${key}/`} aria-current={path.startsWith(`/${key}/`) ? 'page' : undefined}>
+                        {projects[key].short}
+                    </a>
+                </li>
+            ))}
+        </ul>
+    </nav>
+    <div class="header-actions">
+        <a class="header-icon" href={`mailto:${profile.email}`} aria-label="메일 보내기">
+            <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+            >
+                <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+                <path d="m3 7 9 6 9-6"></path>
+            </svg>
         </a>
-        {available.length > 0 && (
-            <nav class="site-nav" aria-label="프로젝트">
-                <ul>
-                    {available.map((key) => (
-                        <li>
-                            <a href={`/${key}/`} aria-current={path.startsWith(`/${key}/`) ? 'page' : undefined}>
-                                {projects[key].short}
-                            </a>
-                        </li>
-                    ))}
-                </ul>
-            </nav>
-        )}
+        <a class="header-icon" href={profile.github} aria-label="GitHub">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d={siGithub.path}></path>
+            </svg>
+        </a>
+        <span class="header-divider" aria-hidden="true"></span>
         <ThemeToggle />
     </div>
 </header>
 
 <script>
-    // 좁은 화면의 메뉴는 가로로 넘치면 옆으로 밀어 본다. 지금 프로젝트의 알약이 오른쪽에서 잘리면
+    // 좁은 화면의 메뉴는 가로로 넘치면 옆으로 밀어 본다. 지금 페이지의 메뉴가 오른쪽에서 잘리면
     // 메뉴만 그만큼 밀어 보이게 한다 (페이지는 움직이지 않는다)
     const nav = document.querySelector<HTMLElement>('.site-nav');
     const current = nav?.querySelector<HTMLElement>('a[aria-current="page"]');
     if (nav && current) {
-        const hidden =
-            current.getBoundingClientRect().right -
-            nav.getBoundingClientRect().right +
-            parseFloat(getComputedStyle(nav).paddingRight);
+        const hidden = current.getBoundingClientRect().right - nav.getBoundingClientRect().right;
         if (hidden > 0) nav.scrollLeft += hidden;
     }
 </script>
