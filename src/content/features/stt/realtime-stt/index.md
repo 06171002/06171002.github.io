@@ -1,88 +1,90 @@
 ---
-title: "실시간 스트리밍 STT"
+title: "실시간 받아쓰기 — 밀려도 건너뛰지 않는다"
 slug: "realtime-stt"
 project: "stt"
-order: 5
+order: 1
 domain: "스트리밍"
-keywords: ["WebSocket","Silero VAD","ThreadPool","큐 분리","Redis Pub/Sub"]
+keywords: ["WebSocket","Silero VAD","faster-whisper","순서 보장"]
 evidence: ["tested","measured"]
 draft: false
 cover: null
-notionEditedAt: "2026-08-31"
+notionEditedAt: "2026-11-11"
 description: null
-glance: {"headline":"실시간 음성 전사 — 추론은 스레드풀로 빼고 무음은 STT 전에 걸러, 배포 서버에서 단일 세션 실시간 전사를 유지했다","problem":["STT 추론은 동기 연산이라 이벤트 루프에서 돌리면 다른 연결의 송수신이 모두 멈춘다.","들어오는 소리를 전부 STT에 넣으면 무음에서 자원을 낭비하고 없는 말이 생기며, 연결이 끊기면 마지막 발화가 사라진다."],"solution":["입력 · 결과 큐를 나누고 추론은 스레드풀로 넘겨 이벤트 루프를 비웠다.","32ms 프레임마다 음성 확률로 발화 경계를 자르는 상태머신으로 무음을 STT 전에 거르고, 연결이 끊기면 남은 버퍼를 채워 강제 전사한다."],"result":["상태머신 테스트 17/17 통과 — 무음만 들어오면 세그먼트가 하나도 나오지 않는다(hypothesis 300 케이스).","배포 서버(CPU)에서 30초 음성을 실시간 배속으로 흘리자 자막 지연 5.1~6.0초(평균 약 5.5초)로 구간이 쌓이지 않고 실시간을 따라갔다."]}
-leadFigure: {"light":"/content-assets/stt/realtime-stt/diagram-1.light.svg","dark":"/content-assets/stt/realtime-stt/diagram-1.dark.svg","alt":"소리가 자막이 되기까지 다이어그램"}
+glance: {"headline":"말이 멈춘 곳에서 문장을 자르고, 받아쓰기가 밀려도 한 문장도 건너뛰지 않고 순서대로 돌려준다","problem":["부르는 쪽은 끊김 없는 소리를 아무 데서나 잘라 보낼 뿐, 문장이 어디서 끝나는지 알려 주지 않는다.","받아쓰기는 서버 전체에서 한 번에 하나만 돌아 밀릴 수 있는데, 밀린 소리를 버리면 상담 기록에 빈 구간이 생긴다."],"solution":["32ms 프레임마다 음성 확률을 보고, 0.5초 쉬면 문장을 닫고 쉬지 않으면 15초에서 자르며 0.25초보다 짧은 소리는 버린다.","문장을 연결마다 대기열에 넣어 하나씩 순서대로 받아쓰고, 건너뛰는 대신 문장마다 얼마나 늦었는지를 함께 보낸다."],"result":["첫 문장을 받아쓰는 동안 다섯 문장이 들어와도 다섯 개가 순서대로 돌아오는 것을 테스트로 고정했다.","로컬에서 한국어 음성 17.4초를 실시간 속도로 보내자 문장 넷이 순서대로 왔고('네'도 따로), 늦은 정도는 480~580ms 였다.","연결 둘을 동시에 열어도 둘 다 문장 넷을 받았고, 뒤 차례 연결은 약 1000ms 로 늦게 받았다."]}
+leadFigure: {"light":"/content-assets/stt/realtime-stt/diagram-1.light.svg","dark":"/content-assets/stt/realtime-stt/diagram-1.dark.svg","alt":"소리가 문장이 되기까지 다이어그램"}
 ---
 
-## 소리가 자막이 되기까지
+## 소리가 문장이 되기까지
 
-WebSocket 으로 들어오는 오디오 청크를 버퍼링 없이 실시간으로 전사한다. 세 가지가 걸렸다.
+화상 상담 자막처럼 끊김 없이 들어오는 소리를 받아 **문장 단위**로 돌려준다. 부르는 쪽은 머리 없는 PCM 을 아무 데서나 잘라 보낼 뿐, 문장이 어디서 끝나는지는 알려 주지 않는다. 서버가 말이 멈춘 곳을 찾아 한 문장씩 받아쓴다. 요약 · 번역은 하지 않는다 — 연결 하나가 화자 한 명이고, 누가 말했는지는 부르는 쪽이 안다.
 
-- STT 추론은 CPU · GPU 를 붙잡는 동기 연산이라, 이벤트 루프에서 바로 돌리면 추론하는 동안 다른 연결의 송수신이 모두 멈춘다.
-- 들어오는 소리를 전부 STT 에 넣으면 침묵까지 연산해 자원을 낭비하고, 무음에서 없는 말(환각)이 생긴다.
-- VAD 가 발화 끝을 확정하기 전에 연결이 끊기면, 버퍼에 남은 마지막 발화가 전사되지 않고 사라진다.
+<figure class="diagram"><img src="/content-assets/stt/realtime-stt/diagram-1.light.svg" alt="소리가 문장이 되기까지 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/realtime-stt/diagram-1.dark.svg" alt="소리가 문장이 되기까지 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
-<figure class="diagram"><img src="/content-assets/stt/realtime-stt/diagram-1.light.svg" alt="소리가 자막이 되기까지 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/realtime-stt/diagram-1.dark.svg" alt="소리가 자막이 되기까지 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
-
----
-
-## 추론은 스레드풀로 — 이벤트 루프를 비운다
-
-수신과 인식을 떼어 놓으려고 입력 큐와 결과 큐를 나누고, STT 추론은 스레드풀(워커 3개)로 넘긴다.
-
-<figure class="diagram"><img src="/content-assets/stt/realtime-stt/diagram-2.light.svg" alt="추론은 스레드풀로 — 이벤트 루프를 비운다 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/realtime-stt/diagram-2.dark.svg" alt="추론은 스레드풀로 — 이벤트 루프를 비운다 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
+문장의 시각은 벽시계가 아니라 **받은 샘플 수**로 센다 — 연결을 연 뒤 몇 초째 소리인지가 그대로 자막 시각이 된다.
 
 ---
 
-## 무음은 STT 전에 거른다 — 발화 분할 상태머신
+## 말이 멈춘 곳에서 자른다
 
-16kHz 오디오를 32ms 프레임마다 Silero VAD 에 넣어 음성 확률을 받고(임계값 0.5, 민감도 설정 3 이상이면 0.6), 상태머신으로 발화를 자른다. 무음 구간은 STT 로 가지 않는다.
+32ms 프레임마다 Silero VAD 로 음성 확률을 받아 문장을 자른다. faster-whisper 에 들어 있는 모델이라 새 의존성이 없다.
 
-<figure class="diagram"><img src="/content-assets/stt/realtime-stt/diagram-3.light.svg" alt="무음은 STT 전에 거른다 — 발화 분할 상태머신 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/realtime-stt/diagram-3.dark.svg" alt="무음은 STT 전에 거른다 — 발화 분할 상태머신 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
+<figure class="diagram"><img src="/content-assets/stt/realtime-stt/diagram-2.light.svg" alt="말이 멈춘 곳에서 자른다 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/realtime-stt/diagram-2.dark.svg" alt="말이 멈춘 곳에서 자른다 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
-포맷마다 디코딩도 다르다. Raw PCM 은 NumPy 로 바로(가장 빠름), Opus · WebM 은 PyAV 스트리밍 파서로, 그 밖(MP3 등)은 Pydub 로 처리한다.
-
----
-
-## 끊겨도 마지막 발화는 전사한다
-
-<figure class="diagram"><img src="/content-assets/stt/realtime-stt/diagram-4.light.svg" alt="끊겨도 마지막 발화는 전사한다 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/realtime-stt/diagram-4.dark.svg" alt="끊겨도 마지막 발화는 전사한다 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
+- **시작과 끝의 문턱을 다르게** 뒀다. 0.5 이상이면 말이 시작되고, 말하는 중에는 0.35 아래로 떨어져야 침묵으로 센다 — 약하게 발음한 음절에서 문장이 끊기지 않게.
+- 말이 시작되기 직전 **0.2초를 붙여** 첫 음절이 잘리지 않게 한다.
+- VAD 모델은 부를 때마다 빈 상태에서 시작한다. 그래서 새 프레임 앞에 **직전 1초**를 붙여 넣어 판단할 근거를 준다.
+- 아무 데서나 자른 소리도 한 번에 보낸 것과 **같은 문장**이 된다. 프레임에 모자란 바이트는 다음 조각과 이어 붙이고, 끝낼 때 남은 바이트는 침묵으로 채워 마지막 음절까지 받아쓴다.
 
 ---
 
-## 결과
+## 밀려도 건너뛰지 않는다
 
-**발화 분할 상태머신 테스트 17/17 통과** (pytest + hypothesis). 이 설계의 핵심 주장인 '무음은 STT 호출에서 빠진다'를 직접 검증했다.
+받아쓰기는 서버 전체에서 한 번에 하나만 돈다. 연결이 여럿이거나 말이 빨리 이어지면 문장이 차례를 기다린다. 밀린 소리를 버리면 자막은 빨라지지만 **상담 기록에 빈 구간**이 생긴다. 그래서 건너뛰지 않고, 대신 문장마다 **얼마나 늦었는지**를 함께 보낸다.
+
+<figure class="diagram"><img src="/content-assets/stt/realtime-stt/diagram-3.light.svg" alt="밀려도 건너뛰지 않는다 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/realtime-stt/diagram-3.dark.svg" alt="밀려도 건너뛰지 않는다 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
+
+- 대기열은 연결마다 하나이고 넣은 순서대로만 꺼내므로, 문장 번호가 말한 순서와 같다.
+- 늦은 정도는 대기열에 넣은 때부터 보낼 때까지 — 차례를 기다린 시간과 받아쓴 시간이다. 문장을 끊는 침묵 0.5초는 여기에 늘 더해진다.
+- 같은 연결에서 **앞서 받아쓴 글의 끝 200자**를 다음 문장의 문맥으로 넘긴다. 이름과 용어가 문장을 넘어 이어진다.
+- 문장 하나를 받아쓰지 못하면 그 문장만 오류로 알리고 연결은 이어 간다.
+
+---
+
+## 연결을 끝낼 때
+
+<figure class="diagram"><img src="/content-assets/stt/realtime-stt/diagram-4.light.svg" alt="연결을 끝낼 때 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/realtime-stt/diagram-4.dark.svg" alt="연결을 끝낼 때 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
+
+- 마지막 문장까지 받으려면 '끝'을 보내고 '다 됨'을 기다린다. 그냥 끊으면 아직 받아쓰지 못한 말은 버린다 — 결과를 돌려줄 곳이 없기 때문이다.
+- '끝' 없이 끊긴 연결도 동시 연결 자리를 돌려준다.
+- 요청 기록에는 받은 소리 길이 · 문장 수 · 가장 컸던 늦은 정도만 남기고, **받아쓴 글과 소리는 남기지 않는다**. 소리는 메모리에만 둔다.
+
+---
+
+## 확인
+
+**테스트** — VAD 와 받아쓰기 모델을 가짜로 바꿔 동작만 본다.
 
 <div class="table-wrap">
 
-| **검증 내용**                                                   | **방식**                  |
-| ----------------------------------------------------------- | ----------------------- |
-| **무음만 들어오면 세그먼트가 한 번도 나오지 않는다**                             | hypothesis 300건 (임의 길이) |
-| **최소 발화 길이(5프레임)에 못 미치면 침묵이 와도 버려진다**                       | hypothesis 200건         |
-| 연속 음성 5프레임에 닿아야 발화로 인정한다                                    | 경계                      |
-| 침묵 20프레임에 세그먼트를 낸다 · 19프레임까지는 내지 않는다                        | 경계 양방향                  |
-| 세그먼트를 낸 뒤 상태를 완전히 초기화한다 (모델 내부 상태 포함)                       | —                       |
-| **프레임 크기가 다르면 무시하고 상태를 바꾸지 않는다** — 부분 청크가 발화 경계를 어긋나게 하지 않게 | 5가지 크기                  |
-| 종료 플러시는 최소 길이 조건을 무시하고 남은 버퍼를 낸다                            | 종료 유실 방지                |
-| 민감도 설정 3 이상 → 임계값 0.6                                       | 설정 변환                   |
+| 무엇을          | 어떻게 확인했나                                                         |
+| ------------ | ---------------------------------------------------------------- |
+| 밀려도 빠짐없이     | 첫 문장을 받아쓰는 동안 다섯 문장이 들어와도 다섯 개가 순서대로 오고, 다섯째 문장이 첫 문장보다 늦었다고 알린다 |
+| 아무 데서나 자른 소리 | 샘플과 프레임을 가르는 333바이트씩 보내도 한 번에 보낸 것과 같은 문장                        |
+| 쉬지 않는 말      | 상한을 2초로 두고 5초를 이어 말하면 2초짜리 문장 둘 — 자른 곳에서 빠지는 소리가 없다              |
+| 끝과 마지막 음절    | '끝'을 보내면 말하던 문장까지 받아쓴 뒤 '다 됨' · 프레임에 7샘플 모자란 끝도 남는다              |
+| 동시 연결 상한     | 상한 1 에서 둘째 연결은 '바쁨' — 첫 연결이 '끝' 없이 끊긴 뒤 다시 하면 또 들어간다             |
+| 요청 기록        | 기록에 받아쓴 글도 입력 글도 없다                                              |
 
 </div>
 
-<strong>모델은 스텁, 상태머신은 실물로 테스트했다.</strong> Silero 모델의 정확도는 그 프로젝트의 책임이고, 내가 만든 것은 확률값을 받아 발화 경계를 자르는 상태머신이다. 그래서 모델을 '프레임별 음성 확률을 테스트가 정하는' 스텁으로 바꿔 경계 조건을 결정론적으로 고정했다 — 실제 모델은 수백 MB 를 내려받아야 하고 확률도 비결정적이라 경계를 검증할 수 없다. 설정 상수는 하드코딩하지 않고 실제 설정 파일을 읽는다. 운영 값이 바뀌면 테스트가 반응해야 하기 때문이다.\
-<strong>배포 서버 실측 (2026-08-30)</strong> — 로컬이 아니라 GPU 없이 CPU 로만 추론하는 배포 서버에서 쟀다. 30초 한국어 음성을 실시간 배속(1.0x)으로 WebSocket 에 흘리고, 발화가 끝난 때부터 전사 결과가 DB 에 기록된 때까지를 자막 지연으로 판정했다(단일 세션).
+<strong>로컬 확인 (2026-11-11)</strong> — 로컬 PC 의 CPU 에서 작은 모델(base)과 한국어 합성 음성 17.4초(문장 넷, '네' 한 마디 포함)로, 100ms 조각을 실시간 속도로 보냈다.
 
-<div class="table-wrap">
+<div class="table-wrap row-header">
 
-| **발화 구간**      | **길이** | **자막 지연** |
-| -------------- | ------ | --------- |
-| 7.39 → 12.83s  | 5.44s  | \~5.2s    |
-| 13.02 → 18.94s | 5.92s  | \~5.1s    |
-| 19.33 → 25.31s | 5.98s  | \~5.7s    |
-| 25.60 → 29.98s | 4.38s  | \~6.0s    |
+|                | 결과                                             |
+| -------------- | ---------------------------------------------- |
+| 16kHz 로        | 문장 넷이 순서대로 — 짧은 '네'도 따로. 늦은 정도 480\~580ms      |
+| 같은 소리를 48kHz 로 | 같은 문장 넷                                        |
+| 연결 둘을 동시에      | 둘 다 문장 넷. 뒤 차례 연결의 늦은 정도는 약 1000ms — 앞 연결의 두 배 |
 
 </div>
-
-<figure class="diagram"><img src="/content-assets/stt/realtime-stt/diagram-5.light.svg" alt="결과 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/realtime-stt/diagram-5.dark.svg" alt="결과 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
-
-<strong>자막 지연 5.1\~6.0초(평균 약 5.5초), 처리량은 실시간을 따라간다.</strong> 자막이 기록되는 간격(6 · 7 · 5초)이 오디오 간격(6.11 · 6.37 · 4.67초)과 거의 같다 — 구간이 쌓이지 않는다는 뜻이다. 지연은 처리량 부족이 아니라 일정한 오프셋이다.

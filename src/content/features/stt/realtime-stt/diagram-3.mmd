@@ -1,10 +1,14 @@
-stateDiagram-v2
-    state "무음 — 대기" as idle
-    state "발화 후보" as cand
-    state "발화 중" as talk
-    state "세그먼트 → STT" as emit
-    idle --> cand: 음성 확률 ≥ 임계값
-    cand --> idle: 5프레임(160ms)에 못 미치고 끊김 — 버린다
-    cand --> talk: 연속 음성 5프레임(160ms)
-    talk --> emit: 침묵 20프레임(640ms)
-    emit --> idle: 상태 초기화
+sequenceDiagram
+    participant c as 부르는 쪽
+    participant s as 문장 자르기
+    participant q as 대기열
+    participant w as 받아쓰기
+    c->>s: 문장 1 · 2 · 3 이 잇달아 끝남
+    s->>q: 문장 1 · 2 · 3 · 넣은 시각 기록
+    q->>w: 문장 1
+    w-->>c: 문장 1 · 늦은 정도
+    q->>w: 문장 2 + 문맥
+    w-->>c: 문장 2 · 더 늦음
+    q->>w: 문장 3 + 문맥
+    w-->>c: 문장 3 · 더 늦음
+    Note over c,w: 버리지 않는다 — 늦을 뿐, 순서와 문장 수는 그대로

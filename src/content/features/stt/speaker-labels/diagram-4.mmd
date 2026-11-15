@@ -1,0 +1,14 @@
+sequenceDiagram
+    participant p as 녹음하는 휴대폰
+    participant app as 앱 서버
+    participant s as 받아쓰기 서비스
+    participant r as 상담 기록
+    app->>s: 연결 — 화자 2명 구분
+    p->>app: 소리
+    app->>s: 소리
+    s-->>app: 문장 · 화자 1
+    app->>r: 녹음한 사람의 작업에 저장
+    s-->>app: 문장 · 화자 2 (처음)
+    app->>r: 같은 방에 작업 하나 더 — 이름은 붙이지 않음
+    s-->>app: 문장 · 화자 2
+    app->>r: 화자 2 의 작업에 저장

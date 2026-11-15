@@ -1,12 +1,11 @@
 sequenceDiagram
-    participant gen as 전사 결과 (하나씩 나온다)
-    participant w as 워커
-    participant out as DB 저장 + Redis 발행
-    gen->>w: 세그먼트 1
-    gen->>w: 세그먼트 2 (미리 읽기)
-    w->>out: 1 — 처리 중
-    gen->>w: 세그먼트 3 (미리 읽기)
-    w->>out: 2 — 처리 중
-    gen-->>w: 더 없음
-    w->>out: 3 — 전사 완료 (마지막)
-    w->>out: LLM 요약 → 최종 요약 → 완료
+    participant c as 부르는 쪽
+    participant e as 받아쓰기 입구
+    participant w as 받아쓰기
+    c->>e: 파일 · 나오는 대로 받기
+    e->>w: 받아쓰기 시작
+    w-->>c: 문장 1 · 시작 · 끝 시각
+    w-->>c: 문장 2 · 시작 · 끝 시각
+    c--xe: 연결을 끊음
+    e->>w: 그만 — 다음 문장에서 멈춤
+    Note over c,w: 작업 번호 없이, 연결을 쥐고 있는 동안만 처리한다

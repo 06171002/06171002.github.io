@@ -1,0 +1,17 @@
+sequenceDiagram
+    participant a as 사람 A
+    participant t as 화자 판정 · 2명
+    participant b as 사람 B
+    rect rgba(220, 80, 70, 0.14)
+        Note over a,b: 예 — 짧은 말도 새 화자를 열 수 있다면
+        a->>t: 긴 질문 → 화자 1
+        a->>t: '네' 0.5초 — 벡터가 흔들려 새 화자 → 화자 2
+        b->>t: 긴 대답 → 자리가 다 차 가장 닮은 쪽으로
+        Note over a,b: 두 자리를 A 한 사람이 차지 — B 의 말도 A 의 번호로 붙는다
+    end
+    rect rgba(60, 160, 90, 0.14)
+        Note over a,b: 지금 — 1초보다 짧은 말은 새 화자를 열지도, 평균을 움직이지도 못한다
+        a->>t: 긴 질문 → 화자 1
+        a->>t: '네' 0.5초 → 가장 닮은 화자 1
+        b->>t: 긴 대답 → 새 화자 2
+    end

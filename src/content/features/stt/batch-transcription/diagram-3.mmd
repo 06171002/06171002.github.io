@@ -1,5 +1,15 @@
-flowchart TD
-    c["SSE 연결"] --> r["① DB 의 지난 세그먼트를 다시 보낸다"]
-    r --> q{"작업 상태"}
-    q -->|"이미 완료"| f["② 최종 요약을 보내고 끝"]
-    q -->|"진행 중"| s["③ Redis Pub/Sub 구독<br/>최종 요약 · 오류가 오면 끝"]
+sequenceDiagram
+    participant f as 긴 파일
+    participant l as 받아쓰기 잠금
+    participant r as 실시간 문장
+    rect rgba(220, 80, 70, 0.14)
+        Note over f,r: 파일 전체에 잠금을 잡으면
+        f->>l: 잡음 — 파일 끝까지
+        r-->>l: 기다림 — 파일이 끝날 때까지
+    end
+    rect rgba(60, 160, 90, 0.14)
+        Note over f,r: 한 걸음마다 잡았다 놓으면
+        f->>l: 잡음 → 한 걸음 → 놓음
+        r->>l: 걸음 사이에 잡을 수 있음 → 받아쓰기 → 놓음
+        f->>l: 잡음 → 다음 한 걸음
+    end

@@ -1,8 +1,14 @@
-flowchart LR
-    subgraph room["방 하나 — 작업은 참가자마다 (1:N)"]
-        direction TB
-        p1["참가자 A<br/>WebSocket · 전사 작업"]
-        p2["참가자 B<br/>WebSocket · 전사 작업"]
-        p3["참가자 C<br/>WebSocket · 전사 작업"]
-    end
-    room -->|"전원 종료 · 준비됨"| sum["참가자별 대화록을 이어 붙여<br/>LLM 통합 요약 하나"]
+sequenceDiagram
+    participant a as 참가자 A
+    participant app as 앱 서버
+    participant s as 받아쓰기 · 요약 서비스
+    participant b as 참가자 B
+    a->>app: 소리
+    app->>s: A 의 연결로 소리
+    s-->>app: 문장
+    app->>app: 문장 저장
+    app-->>b: 자막 — 방의 참가자 모두에게
+    a->>app: 나감
+    app->>s: 끝 — 남은 소리를 마저
+    s-->>app: 남은 문장 · 다 됨
+    Note over app: 방의 모든 참가자가 끝났으면 대화 전체를 요약해 상담 기록에

@@ -1,87 +1,89 @@
 ---
-title: "배치 전사·요약"
+title: "녹음 파일 받아쓰기"
 slug: "batch-transcription"
 project: "stt"
-order: 1
+order: 4
 domain: "배치"
-keywords: ["Celery","SSE","멀티파트 업로드"]
+keywords: ["SSE","문장별 시각","PyAV 판 고정","임시 파일"]
 evidence: ["tested"]
 draft: false
 cover: null
-notionEditedAt: "2026-08-31"
+notionEditedAt: "2026-11-11"
 description: null
-leadFigure: {"light":"/content-assets/stt/batch-transcription/diagram-1.light.svg","dark":"/content-assets/stt/batch-transcription/diagram-1.dark.svg","alt":"긴 녹음은 뒤에서, 진행은 실시간으로 다이어그램"}
+glance: {"headline":"녹음 파일을 문장별 시각과 함께 받아쓰고, 확인하다 찾은 PyAV 판 호환 문제를 판 고정과 테스트로 막았다","problem":["상담 녹음 파일은 문장마다 시각이 있어야 하고, 말소리가 없는 녹음도 정상 결과로 다뤄야 한다.","로컬 확인에서 파일 받아쓰기가 모두 '소리를 읽지 못함'으로 실패했다 — 실시간 받아쓰기는 멀쩡했다."],"solution":["문장마다 시작 · 끝 시각을 붙여 한 번에 또는 나오는 대로 보내고, 부르는 쪽이 떠나면 다음 문장에서 멈춘다.","faster-whisper 가 파일을 열 때 넘기는 인자를 PyAV 19 가 없앤 것이 원인이라, 19 미만으로 고정하고 설치된 PyAV 로 작은 파일을 실제로 여는 테스트를 더했다."],"result":["로컬에서 17.4초 음성 파일이 2.7초에 문장 셋과 시각으로 돌아왔고, 나오는 대로 받기는 문장 셋 → 끝 → 종료 순서로 왔다.","PyAV 19 가 깔린 환경에서는 그 테스트가 같은 오류로 실패한다.","앱의 녹음 파일 올리기는 바로 돌려주고 뒤에서 받아쓰며, 서비스에는 파일 이름 대신 확장자만 보낸다(앱 테스트 5개 통과)."]}
+leadFigure: {"light":"/content-assets/stt/batch-transcription/diagram-1.light.svg","dark":"/content-assets/stt/batch-transcription/diagram-1.dark.svg","alt":"문장마다 시각을 붙여, 한 번에 또는 나오는 대로 다이어그램"}
 ---
 
-## 긴 녹음은 뒤에서, 진행은 실시간으로
+## 문장마다 시각을 붙여, 한 번에 또는 나오는 대로
 
-업로드된 오디오를 백그라운드(Celery)에서 전사 · 요약하고, 진행 상황을 SSE 로 실시간 푸시한다. 긴 오디오의 전사 + 요약은 수십 초 \~ 수 분이 걸려서, HTTP 요청 안에서 동기로 처리하면 게이트웨이 타임아웃과 커넥션 점유가 생긴다. 전부 끝나야 결과를 주면 사용자는 그동안 진행을 알 수 없고, 작업 도중에 SSE 를 연결하면 이미 지나간 세그먼트를 놓쳐 화면이 비어 보인다.\
-그래서 업로드는 202 로 바로 받고, 워커가 세그먼트를 하나씩 저장 · 발행한다.
+음성 · 영상 파일을 받아 **문장마다 시작 · 끝 시각**이 붙은 글로 돌려준다. 한 번에 받거나, 문장이 나오는 대로(SSE) 받는다. 요약은 하지 않는다 — 필요하면 기존 요약 기능을 따로 부른다.
 
-<figure class="diagram"><img src="/content-assets/stt/batch-transcription/diagram-1.light.svg" alt="긴 녹음은 뒤에서, 진행은 실시간으로 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/batch-transcription/diagram-1.dark.svg" alt="긴 녹음은 뒤에서, 진행은 실시간으로 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
+<figure class="diagram"><img src="/content-assets/stt/batch-transcription/diagram-1.light.svg" alt="문장마다 시각을 붙여, 한 번에 또는 나오는 대로 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/batch-transcription/diagram-1.dark.svg" alt="문장마다 시각을 붙여, 한 번에 또는 나오는 대로 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
----
-
-## Look-ahead — 마지막 세그먼트를 미리 안다
-
-다음 세그먼트를 한 칸 미리 읽어 지금 것이 마지막인지 판별한다. 중간은 '처리 중', 마지막은 '전사 완료'로 태깅하고, 각 세그먼트를 바로 DB 에 저장하고 Redis 로 발행한다 — 메모리에는 한 개씩만 둔다. SSE 클라이언트는 이 태그로 스트림이 끝났는지 판단하므로, 태그가 어긋나면 화면이 영원히 기다리거나 대화가 잘린 채 끝난 것처럼 보인다.
-
-<figure class="diagram"><img src="/content-assets/stt/batch-transcription/diagram-2.light.svg" alt="Look-ahead — 마지막 세그먼트를 미리 안다 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/batch-transcription/diagram-2.dark.svg" alt="Look-ahead — 마지막 세그먼트를 미리 안다 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
+- **말소리가 없는 파일은 오류가 아니라 빈 결과**다. 상담 녹음에서는 빈 녹음도 정상 결과로 다뤄야 하기 때문이다 — 기존 음성 파일 요약은 이 경우 오류를 낸다.
+- 크기 상한을 넘는 파일은 거절한다.
+- 요청 기록에는 파일 이름 · 소리 길이 · 문장 수만 남기고, **받아쓴 글과 파일은 남기지 않는다**.
 
 ---
 
-## SSE — 늦게 연결해도 처음부터 본다
+## 나오는 대로 받다가 떠나면 멈춘다
 
-<figure class="diagram"><img src="/content-assets/stt/batch-transcription/diagram-3.light.svg" alt="SSE — 늦게 연결해도 처음부터 본다 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/batch-transcription/diagram-3.dark.svg" alt="SSE — 늦게 연결해도 처음부터 본다 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
+<figure class="diagram"><img src="/content-assets/stt/batch-transcription/diagram-2.light.svg" alt="나오는 대로 받다가 떠나면 멈춘다 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/batch-transcription/diagram-2.dark.svg" alt="나오는 대로 받다가 떠나면 멈춘다 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
-늦게 연결해도 전체 히스토리를 받고, 이미 끝난 작업은 쓸데없이 구독하지 않는다.
-
----
-
-## 실패는 한 곳에서, 무음은 실패가 아니다
-
-<figure class="diagram"><img src="/content-assets/stt/batch-transcription/diagram-4.light.svg" alt="실패는 한 곳에서, 무음은 실패가 아니다 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/batch-transcription/diagram-4.dark.svg" alt="실패는 한 곳에서, 무음은 실패가 아니다 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
-
-- **3단계 에러 후처리** — async 컨텍스트 매니저로 파이프라인 예외를 한 곳에서 잡는다. 구조화 로그를 남긴 뒤 ① 에러 로그 테이블(단계 · 메시지 · 스택)에 적고 ② 상태를 실패로 바꾸고 ③ Redis 로 오류 이벤트를 발행해 SSE 클라이언트가 바로 알게 한다. 예외는 삼켜 Celery 태스크가 죽지 않는다.
-- **무음은 정상 종결** — 세그먼트가 하나도 없으면(무음 파일 · 인식 불가) 실패가 아니라 빈 요약으로 끝낸다. LLM 을 부르지 않고(빈 대화록으로 부르면 비용만 나간다), 오류 이벤트도 내지 않는다(내면 SSE 클라이언트가 실패로 표시한다).
+- 다 받아쓰면 '끝'(문장 수 · 언어 · 길이) 뒤에 종료 표시가 온다. 읽을 수 없는 파일이면 오류 한 줄 뒤에 끝난다.
+- 부르는 쪽이 연결을 쥐고 있는 동안만 처리하므로 **작업 저장소가 필요 없다**. 떠나면 다음 문장에서 멈춘다.
 
 ---
 
-## 결과 — look-ahead 파이프라인 테스트 10/10
+## 긴 파일과 실시간이 한 모델을 나눠 쓴다
 
-<div class="table-wrap">
+받아쓰기 모델은 서버 전체에서 한 번에 하나만 돈다. 잠금을 파일 전체에 잡으면 긴 파일이 끝날 때까지 실시간 문장이 기다린다. 그래서 잠금은 받아쓰기의 **한 걸음(약 30초 분량)마다** 잡았다 놓는다 — 걸음 사이에 실시간 문장이 잠금을 얻을 자리를 둔다.
 
-| **구분** | **검증 내용**                                                                 |
-| ------ | ------------------------------------------------------------------------- |
-| **태깅** | 세그먼트가 몇 개든 <strong>마지막 하나만 '전사 완료'</strong>, 나머지는 '처리 중' (1\~30개 무작위)     |
-| 경계     | 세그먼트가 <strong>하나뿐이면 그 하나가 바로 '전사 완료'</strong> — off-by-one 이 가장 잘 드러나는 지점 |
-| 순서     | 세그먼트 번호 1부터 순서대로 · 본문과 DB 저장 순서가 같다                                       |
-| 누락 방지  | 세그먼트마다 **저장과 발행을 모두** 한다                                                  |
-| 흐름     | 전사 후 '전사 완료' → LLM 요약 → 최종 요약 발행 → '완료'                                   |
-| 무음     | 세그먼트 0개면 **LLM 을 부르지 않고 '완료'로 종결**, 오류 이벤트 없음                             |
-| 실패     | 전사 도중 예외 → 오류 이벤트 발행 + DB 로그, **예외는 삼켜 Celery 태스크가 죽지 않는다**               |
+<figure class="diagram"><img src="/content-assets/stt/batch-transcription/diagram-3.light.svg" alt="긴 파일과 실시간이 한 모델을 나눠 쓴다 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/batch-transcription/diagram-3.dark.svg" alt="긴 파일과 실시간이 한 모델을 나눠 쓴다 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
+
+---
+
+## 확인하다 찾은 PyAV 판 문제
+
+로컬 확인에서 파일 받아쓰기가 모두 '소리를 읽지 못함'으로 실패했다. 실시간 받아쓰기는 멀쩡했다.
+
+<figure class="diagram"><img src="/content-assets/stt/batch-transcription/diagram-4.light.svg" alt="확인하다 찾은 PyAV 판 문제 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/batch-transcription/diagram-4.dark.svg" alt="확인하다 찾은 PyAV 판 문제 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
+
+- **원인** — faster-whisper(1.2.1)가 파일을 열 때 넘기는 인자 하나를 PyAV 19 가 없앴다. 서버 이미지는 PyAV 판을 고정하지 않고 설치하므로, 다음 이미지 빌드에서 그대로 들어갈 수 있었다. 기존 음성 파일 요약도 같은 길로 파일을 연다.
+- **고친 것** — PyAV 를 19 미만으로 고정했다. 그리고 **설치된 PyAV 로 작은 파일(1초 · 스테레오 · 44.1kHz)을 실제로 열어 16kHz 모노 1초가 되는지** 보는 테스트를 더했다. 받아쓰기 모델 없이 돈다.
+- PyAV 19 가 깔린 환경에서는 이 테스트가 같은 오류로 실패한다(2026-11-15 확인).
+
+---
+
+## 앱에서 — 올리면 바로 돌려주고 뒤에서
+
+화상 상담 앱의 녹음 파일 올리기도 이 기능을 쓴다.
+
+- 올리면 바로 기록 번호를 돌려주고, 받아쓰기와 요약은 뒤에서 한다. 서비스가 한 번에 하나씩 받아쓰므로 앱도 차례대로 보낸다.
+- 기록은 실시간 상담 녹음과 같은 자리에 남긴다 — 파일 하나가 방 하나 + 작업 하나라, 상담 기록 목록 · 상세 조회를 바꾸지 않았다.
+- 파일 이름에는 사람 이름이 들어 있을 수 있어 서비스에는 **확장자만** 보낸다.
+- 앱이 결과를 기다리고 있지 않아도 기록은 남는다 — 앱은 목록에서 본다.
+
+---
+
+## 확인
+
+<strong>로컬 확인 (2026-11-11)</strong> — 로컬 PC 의 CPU 에서 작은 모델(base)과 한국어 합성 음성 17.4초로.
+
+<div class="table-wrap row-header">
+
+|           | 결과                  |
+| --------- | ------------------- |
+| 한 번에 받기   | 2.7초에 문장 셋과 시각      |
+| 나오는 대로 받기 | 문장 셋 → 끝 → 종료 표시 순서 |
 
 </div>
 
-look-ahead 는 off-by-one 이 나기 가장 쉬운 패턴이라, 세그먼트 수를 1\~30 으로 무작위로 바꿔 가며 정확히 하나만 '전사 완료'인지 확인했다. 세그먼트가 1개인 경우(첫 세그먼트 = 마지막)는 분기가 달라 따로 경계 테스트로 고정했다.
-
----
-
-## 배포 환경의 자원 예산 (2026-08-30 확인)
-
-배치 워커와 실시간 스트리밍 API 는 **같은 서버의 같은 CPU 를 나눠 쓴다**(GPU 없음). 그래서 Celery 동시성 2 는 따로 정한 숫자가 아니라 실시간 경로와 예산을 나눈 결과다.
-
-<figure class="diagram"><img src="/content-assets/stt/batch-transcription/diagram-5.light.svg" alt="배포 환경의 자원 예산 (2026-08-30 확인) 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/batch-transcription/diagram-5.dark.svg" alt="배포 환경의 자원 예산 (2026-08-30 확인) 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
-
-실시간 스트리밍은 API 서버가 전담하고 워커는 배치만 처리하므로 API 에 코어를 더 배분했다. 워커는 Celery 자식 프로세스마다 추론 스레드가 따로 생겨서 동시성과 자식당 추론 스레드를 함께 묶었다 — GPU 구성의 동시성 4 를 CPU 배포에서 2 로 줄인 이유다. 그래서 배치 쪽은 최대 4 스레드로 상한이 있고, 상한이 없는 쪽은 실시간 경로다(세션마다 스레드풀이 새로 생긴다 — 「실시간 스트리밍 STT」 카드).
-
 <div class="table-wrap">
 
-| **STT 설정** | <strong>실시간(API 서버)</strong> | <strong>배치(워커)</strong> | **비고**                                                                                        |
-| ---------- | ---------------------------- | ----------------------- | --------------------------------------------------------------------------------------------- |
-| beam 크기    | 코드 기본 1 (greedy) · 배포 **5**  | **5** (라이브러리 기본값)       | 30초 표본 음성 벤치마크에서 greedy 가 "가정"을 "과정"으로 잘못 알아들어, 배포에서는 실시간도 5 로 올렸다. 배치 경로는 beam 을 설정에서 읽지 않는다 |
-| 연산 정밀도     | int8                         | int8                    | int8_float32 는 출력이 문자 단위로 같고 속도도 같아 올릴 이유가 없었다                                                |
+| 테스트          | 무엇을                                                                                                             |
+| ------------ | --------------------------------------------------------------------------------------------------------------- |
+| 서비스          | 문장별 시각 · 말소리 없는 파일은 빈 결과 · 나오는 대로 받기의 순서 · 읽을 수 없는 파일은 오류 한 줄 · 크기 상한과 인증 · 설치된 PyAV 로 파일 열기 · 요청 기록에 글이 없음     |
+| 앱 (5개 모두 통과) | 올린 파일이 방 하나 · 끝난 작업 하나 · 문장이 됨 · 읽지 못한 파일은 실패한 작업 · 앱이 듣고 있지 않아도 기록 · 기록을 못 만들면 아무것도 보내지 않고 파일을 지움 · 짧은 확장자만 남김 |
 
 </div>
-
-코드 기본값으로는 실시간 beam 1 · 배치 beam 5 로 갈리지만, <strong>배포에서는 실시간도 beam 5 로 맞춰 두 경로가 같았다.</strong> 또 배치 경로는 beam 을 설정에서 읽지 않아 라이브러리 기본값을 따른다 — 「멀티 엔진 추상화 (STT·LLM)」 카드의 설정 기반 튜닝이 beam 에 대해서는 실시간 경로에만 닿는다.

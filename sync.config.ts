@@ -29,12 +29,11 @@ export const features: FeatureEntry[] = [
     { project: 'b2b', slug: 'order-payment', order: 5, evidence: ['measured', 'tested'], publish: true },
     { project: 'b2b', slug: 'cart', order: 6, evidence: ['measured', 'tested'], publish: true },
     { project: 'b2b', slug: 'company-join-request', order: 7, evidence: ['tested'], publish: true },
-    // 실시간 음성 전사·요약 STT 서버
-    { project: 'stt', slug: 'batch-transcription', order: 1, evidence: ['tested'], publish: true },
-    { project: 'stt', slug: 'engine-abstraction', order: 2, evidence: ['measured'], publish: true },
-    { project: 'stt', slug: 'async-queue-observability', order: 3, evidence: ['tested'], publish: true },
-    { project: 'stt', slug: 'room-summary', order: 4, evidence: ['tested'], publish: true },
-    { project: 'stt', slug: 'realtime-stt', order: 5, evidence: ['tested', 'measured'], publish: true },
+    // 사내 받아쓰기·요약 서비스
+    { project: 'stt', slug: 'realtime-stt', order: 1, evidence: ['tested', 'measured'], publish: true },
+    { project: 'stt', slug: 'speaker-labels', order: 2, evidence: ['measured', 'tested'], publish: true },
+    { project: 'stt', slug: 'room-summary', order: 3, evidence: ['tested'], publish: true },
+    { project: 'stt', slug: 'batch-transcription', order: 4, evidence: ['tested'], publish: true },
     // 사내 LLM 게이트웨이 — 요금 셈(cost-accounting)은 2026-11-15 예산 카드에 합쳤다. 옛 주소는 astro.config.mjs 의 redirects
     { project: 'llm', slug: 'budget', order: 1, evidence: ['measured', 'tested'], publish: true },
     { project: 'llm', slug: 'tenant-isolation', order: 2, evidence: ['tested', 'measured'], publish: true },

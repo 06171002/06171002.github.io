@@ -10,12 +10,12 @@ export const projects = {
         stack: ['Java', 'Spring Boot', 'JPA', 'MyBatis', 'MySQL'],
     },
     stt: {
-        name: '실시간 음성 전사·요약 STT 서버',
-        short: 'STT 서버',
+        name: '사내 받아쓰기·요약 서비스',
+        short: '받아쓰기·요약',
         summary:
-            '음성을 실시간 · 배치로 전사하고 LLM 으로 요약하는 비동기 백엔드. 엔진을 교체할 수 있는 구조와 실시간 처리의 논블로킹화를 맡았다.',
+            '사내 여러 서비스가 함께 쓰는 요약 서비스에 실시간 · 파일 받아쓰기와 마이크 하나의 화자 구분을 더하고, 화상 상담 앱이 참가자마다 자막을 받고 상담이 끝나면 대화 전체를 요약해 기록하도록 연결했다.',
         role: '백엔드',
-        stack: ['Python', 'FastAPI', 'Celery', 'Redis'],
+        stack: ['Python', 'FastAPI', 'faster-whisper', 'ONNX Runtime', 'Java', 'Spring Boot'],
     },
     llm: {
         name: '사내 LLM 게이트웨이',

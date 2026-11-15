@@ -1,58 +1,84 @@
 ---
-title: "다자 화상회의 룸 요약"
+title: "화상 상담 자막과 방 요약"
 slug: "room-summary"
 project: "stt"
-order: 4
-domain: "스트리밍"
-keywords: ["방 단위 집계","통합 요약","1:N"]
+order: 3
+domain: "작업 처리"
+keywords: ["참가자별 연결","자막 중계","조건부 갱신","방 단위 요약"]
 evidence: ["tested"]
 draft: false
 cover: null
-notionEditedAt: "2026-08-30"
+notionEditedAt: "2026-11-11"
 description: null
-leadFigure: {"light":"/content-assets/stt/room-summary/diagram-3.light.svg","dark":"/content-assets/stt/room-summary/diagram-3.dark.svg","alt":"언제 요약할지 — 4상태 판정 다이어그램"}
+glance: {"headline":"화상 상담에서 참가자마다 받아쓰기를 연결해 자막을 주고받고, 모두 끝나면 대화 전체를 한 번만 요약해 상담 기록에 남긴다","problem":["참가자마다 말하고 나가는 때가 다른데, 상담 기록에는 방 전체의 대화와 요약이 하나로 남아야 한다.","나가는 순간 받아쓰기가 밀려 있으면 마지막 말이 빠지고, 두 사람이 거의 동시에 나가면 요약이 두 번 돌 수 있다."],"solution":["나가면 '끝'을 알리고 남은 문장을 모두 받은 뒤 마무리하며(최대 180초), 연결되기 전에 온 소리는 약 10초까지 쥐고 있다 보낸다.","받아쓰는 참가자가 남지 않았을 때 방 상태를 '요약 중'으로 바꾸는 데 성공한 쪽만, 말한 순서대로 이름 없이 묶은 대화를 요약한다."],"result":["문장 저장 · 자막 전달 · 나간 뒤 마무리 · 빈 방과 실패의 구분을 담은 앱 서버 받아쓰기 관리 테스트 17개가 모두 통과한다.","서비스를 부르는 쪽 테스트 9개도 모두 통과한다 — 키는 주소가 아니라 머리로 보내고, 요약이 실패하거나 비면 '없음'으로 받는다."]}
+leadFigure: {"light":"/content-assets/stt/room-summary/diagram-1.light.svg","dark":"/content-assets/stt/room-summary/diagram-1.dark.svg","alt":"참가자마다 연결, 끝나면 방 하나로 요약 다이어그램"}
 ---
 
-## 참가자마다 따로 전사하고, 요약은 방 하나로
+## 참가자마다 연결, 끝나면 방 하나로 요약
 
-WebRTC 다자 화상회의에서 참가자별 STT 작업을 방 단위로 묶고, 전원이 끝나면 전체 대화를 LLM 으로 통합 요약한다. 참가자마다 말하는 속도와 끝나는 때가 다른데, 결과는 회의 전체를 아우르는 요약 하나여야 한다.
+화상 상담에서 앱 서버는 참가자마다 받아쓰기 연결을 하나씩 열어 소리를 보내고, 돌아온 문장을 저장하며 **방의 참가자 모두에게 자막**으로 보낸다. 방 · 작업(참가자 하나) · 문장은 앱 서버가 기록하고, 모든 참가자가 끝나면 방의 대화 전체를 요약해 상담 기록에 남긴다. 받아쓰기와 요약은 서비스가, 기록과 '언제 요약할지'는 앱 서버가 맡는다.
 
-<figure class="diagram"><img src="/content-assets/stt/room-summary/diagram-1.light.svg" alt="참가자마다 따로 전사하고, 요약은 방 하나로 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/room-summary/diagram-1.dark.svg" alt="참가자마다 따로 전사하고, 요약은 방 하나로 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
+<figure class="diagram"><img src="/content-assets/stt/room-summary/diagram-1.light.svg" alt="참가자마다 연결, 끝나면 방 하나로 요약 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/room-summary/diagram-1.dark.svg" alt="참가자마다 연결, 끝나면 방 하나로 요약 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
 
-- 참가자마다 독립 WebSocket · 작업으로 병렬 전사하고, 마지막 참가자의 종료를 감지해 Celery 로 요약한다. 방 정보가 없으면 같은 코드가 1:1 모드로 동작한다.
-- 같은 참가자의 작업이 이미 대기 · 처리 중이면 중복 접속으로 보고 409, 완료 · 실패면 재접속을 허용한다.
-
-<figure class="diagram"><img src="/content-assets/stt/room-summary/diagram-2.light.svg" alt="참가자마다 따로 전사하고, 요약은 방 하나로 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/room-summary/diagram-2.dark.svg" alt="참가자마다 따로 전사하고, 요약은 방 하나로 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
-
----
-
-## 언제 요약할지 — 4상태 판정
-
-일부는 아직 말하고 있고 일부는 실패했을 수 있다. 섣불리 요약하면 대화가 빠지고, 영원히 안 하면 요약이 나오지 않는다. 그래서 참가자 작업이 끝날 때마다 진행 중 · 성공 · 실패 작업을 세어 네 상태 중 하나로 판정하고, **준비됨일 때만** 요약을 시작한다. 요약이 시작되면 방이 '요약 중'으로 넘어가 되돌릴 수 없다.
-
-<figure class="diagram"><img src="/content-assets/stt/room-summary/diagram-3.light.svg" alt="언제 요약할지 — 4상태 판정 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/room-summary/diagram-3.dark.svg" alt="언제 요약할지 — 4상태 판정 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
-
-- **요약 태스크는 최대 5회 재시도**하고, 들어올 때 준비 판정을 한 번 더 확인한다. 아직 준비가 안 됐으면 재시도로 미룬다(경쟁 조건 방어). 준비됐으면 참가자별 대화록을 '--- 참가자: 이름 ---' 구분자로 이어 붙여 LLM 통합 요약을 만들고 방에 저장한다.
-- 판정은 작업 종료 훅(`finally`)에서 불린다. 여기서 예외가 튀면 다른 후처리까지 말리므로, 조회가 실패하면 예외 대신 '조회 오류'라는 값을 돌려주고 호출부는 트리거하지 않는다.
-- 자동 트리거는 마지막 참가자 작업이 끝날 때, 수동 트리거는 요약 요청 API 로 한다. 정확한 성과 범위는 '방 단위 완료 판정 · 재시도 설계 + 통합 요약 생성'이다.
+- 자막에는 말한 사람의 이름을 붙이고, 이름을 모르면 앱이 '나' · '상대'로 보여 준다.
+- 문장과 요약은 민감한 정보라 로그에 남기지 않는다.
 
 ---
 
-## 결과 — 요약 준비 판정 테스트 15/15
+## 나가도 남은 말은 받아쓴다
 
-pytest + hypothesis 로 검증했다.
+참가자가 나가는 순간에도 받아쓰기가 밀려 있을 수 있다 — 서비스는 밀려도 건너뛰지 않는다. 그래서 나가면 '끝'을 알리고, 남은 문장을 모두 받은 뒤 그 참가자의 작업을 마무리한다.
+
+- '다 됨'을 **최대 180초** 기다린다. 기다리는 동안 스레드를 붙잡지 않고, 시간이 지나면 그때까지 받은 문장으로 마무리한다.
+- 서비스와 연결되기 전에 온 소리는 **약 10초**까지 쥐고 있다가 연결되면 보낸다.
+- 서비스에 붙지 못하면 그 참가자의 작업만 실패하고 통화는 이어진다.
+- 중간에 끊겨도 받아쓴 문장이 있으면 그만큼은 기록으로 인정한다.
+
+---
+
+## 언제 요약할지 — 모두 끝났을 때, 한 번만
+
+참가자마다 끝나는 때가 다르다. 참가자 작업이 하나 끝날 때마다 다음 순서로 판정한다.
+
+<figure class="diagram"><img src="/content-assets/stt/room-summary/diagram-2.light.svg" alt="언제 요약할지 — 모두 끝났을 때, 한 번만 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/room-summary/diagram-2.dark.svg" alt="언제 요약할지 — 모두 끝났을 때, 한 번만 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
+
+두 참가자가 거의 동시에 나가면 둘 다 '남은 참가자 없음'을 볼 수 있다. 그래서 방 상태를 <strong>'진행 중'일 때만 '요약 중'으로 바꾸는 조건부 갱신</strong>을 두고, 한 줄을 바꾼 쪽만 요약한다.
+
+<figure class="diagram"><img src="/content-assets/stt/room-summary/diagram-3.light.svg" alt="언제 요약할지 — 모두 끝났을 때, 한 번만 다이어그램" class="diagram-light" loading="lazy" decoding="async"><img src="/content-assets/stt/room-summary/diagram-3.dark.svg" alt="언제 요약할지 — 모두 끝났을 때, 한 번만 다이어그램" class="diagram-dark" loading="lazy" decoding="async"></figure>
+
+- 요약은 몇 분 걸릴 수 있어 웹소켓 스레드가 아니라 따로 둔 실행기에서 한다.
+- **빈 방과 실패를 구분한다** — 말이 없었던 방은 요약 없이 '완료', 서비스에 붙지 못한 참가자가 있었으면 '실패'. 요약이 실패해도 방을 '실패'로 닫는다.
+
+---
+
+## 요약에 보내는 대화
+
+방의 문장을 **말한 순서대로**(여러 참가자를 통틀어 저장된 순서) 잇는다. 참가자가 둘 이상이면 '참가자 1:'처럼 누구의 말인지 붙이고, **이름은 보내지 않는다**. 같은 사람이 이어 말한 문장은 한 줄로 묶는다. 예를 들면 이렇게 보낸다.
+
+```text
+참가자 1: 오늘은 어떤 이야기부터 할까요
+참가자 2: 지난번에 말씀드린 일이요 그 뒤로 조금 나아졌어요
+참가자 1: 다행이네요 언제부터 나아지셨어요
+```
+
+요약은 서비스의 기존 요약 기능을 그대로 부르고, 돌아온 요약을 상담 기록의 요약 한 항목에 넣는다. 앱이 읽는 모양과 같아 따로 형식을 지시하지 않는다.
+
+---
+
+## 확인
+
+앱 서버 테스트 — 받아쓰기 관리 **17개**, 서비스를 부르는 쪽 **9개** 모두 통과한다.
 
 <div class="table-wrap">
 
-| **구분**    | **검증 내용**                                                                                         |
-| --------- | ------------------------------------------------------------------------------------------------- |
-| 상태        | 4상태 전수 — 작업 없음 / 미준비(보류 3조합) / 전원 실패 / 준비됨(성공 3조합) · 일부 실패해도 성공이 있으면 준비됨(한 명 실패로 전체 요약을 포기하지 않는다) |
-| **불변식 ①** | **진행 중인 작업이 있으면 어떤 조합에서도 준비됨이 아니다** (500건)                                                        |
-| **불변식 ②** | **준비됨이면 반드시 성공한 작업이 있다** (500건)                                                                   |
-| 불변식       | 집계가 서로 모순된 값이어도 정의된 상태만 돌려준다 (300건)                                                               |
-| 방어 · 격리   | 집계 키가 일부 빠져도 판정이 깨지지 않는다(없는 키는 0) · 조회가 실패하면 '조회 오류'를 돌려주고 예외를 밖으로 던지지 않는다                        |
-| 호환        | 기존 준비 여부 함수는 준비됨일 때만 참                                                                            |
+| 무엇을                                                             | 테스트        |
+| --------------------------------------------------------------- | ---------- |
+| 소리를 서비스로, 문장은 저장하고 방의 모두에게 자막                                   | 받아쓰기 관리    |
+| 나가면 '끝'을 알리고 마무리한 뒤 방을 요약 · 아직 말하는 참가자가 있으면 요약하지 않음             | 받아쓰기 관리    |
+| 말이 없었던 방은 요약 없이 닫음 · 전혀 받아쓰지 못한 방은 실패 · 요약 실패는 방 실패             | 받아쓰기 관리    |
+| 문장을 받기 전에 끊기면 작업은 실패, 문장을 받은 뒤 끊기면 그만큼은 기록 · 서비스에 못 붙어도 통화는 이어짐 | 받아쓰기 관리    |
+| 연결 전에 온 소리는 연결되면 보냄                                             | 받아쓰기 관리    |
+| 참가자가 여럿일 때만 '참가자 N:'을 붙임                                        | 받아쓰기 관리    |
+| 키는 주소가 아니라 머리로 · 요약이 실패하거나 비면 '없음'으로 받음                         | 서비스를 부르는 쪽 |
 
 </div>
-
-두 불변식은 각각 다른 사고를 막는다. **①**은 아직 말하고 있는 참가자의 대화가 빠진 채 요약이 만들어지는 것을, **②**는 성공이 0건인데 빈 대화록으로 LLM 을 부르는 것을 막는다. 둘 다 예시 테스트로는 조합을 덮을 수 없어 무작위 500건으로 확인했다.
