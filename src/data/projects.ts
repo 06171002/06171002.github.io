@@ -21,7 +21,7 @@ export const projects = {
         name: '사내 LLM 게이트웨이',
         short: 'LLM 게이트웨이',
         summary:
-            '사내 서비스가 OpenAI · Anthropic · 사내 Ollama 모델을 한 입구로 쓰게 하는 LLM 게이트웨이. 예산 예약 · 정산과 유료 요금 셈, 테넌트 자료 격리를 설계했다. 코드와 테스트는 AI 코딩 에이전트(Claude Code)가 썼고, 나는 설계 판단 · 검증 · 배포를 맡았다.',
+            '사내 서비스가 OpenAI · Anthropic · 사내 Ollama 모델을 한 입구로 쓰게 하는 LLM 게이트웨이. 예산 예약 · 정산과 유료 요금 셈, 테넌트 자료 격리를 설계했다.',
         role: '백엔드 설계 · 검증',
         stack: ['Python', 'FastAPI', 'httpx', 'SQLAlchemy', 'MySQL'],
     },
@@ -29,7 +29,7 @@ export const projects = {
         name: '사내 파일·이미지 서버',
         short: '파일 서버',
         summary:
-            '사내 여러 서비스가 함께 쓰는 파일 · 이미지 전용 서버. 업로드 검사 · 저장 · 썸네일 · 서명 주소 · 정리를 한곳에 모으고, 브라우저 직접 업로드와 DB 작업 대기열을 더했다. 코드와 테스트는 AI 코딩 에이전트(Claude Code)와 함께 썼고, 단계마다 공개 API · DB 스키마 · 삭제 규칙의 결정은 내가 내렸다.',
+            '사내 여러 서비스가 함께 쓰는 파일 · 이미지 전용 서버. 업로드 검사 · 저장 · 썸네일 · 서명 주소 · 정리를 한곳에 모으고, 브라우저 직접 업로드와 DB 작업 대기열을 더했다.',
         role: '백엔드 설계',
         stack: ['Java', 'Spring Boot', 'MySQL', 'S3', 'Vue'],
     },

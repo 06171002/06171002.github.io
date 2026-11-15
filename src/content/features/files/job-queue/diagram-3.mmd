@@ -2,10 +2,12 @@ sequenceDiagram
     participant a as 작업자 A
     participant q as 작업 기록
     participant b as 작업자 B
-    a->>q: 잡을 때 무작위 임대 토큰을 적음
-    loop 임대 기한의 1/3 마다
-        a->>q: 토큰이 같을 때만 기한 연장
-    end
-    Note over a,q: 연장이 실패하면 임대를 잃은 것 — 기록 · 등록 · 삭제를 하지 않고 경고만 남긴다
-    b->>q: 회수된 뒤 새 토큰으로 잡음
-    a-->>q: 묵은 토큰으로 결과 기록 → 거부
+    participant st as 저장소
+    a->>q: 잡음 → 토큰 a 를 적음
+    Note over a: 처리가 길어짐
+    q->>q: 기한 지남 → 대기로 회수
+    b->>q: 다시 잡음 → 토큰을 b 로 바꿔 적음
+    b->>st: 같은 키에 쓰고 파일 등록 — 토큰 b 확인 → 통과
+    a->>q: 늦게 끝나 등록하려 함 — 토큰 a 확인 → 기록은 b
+    Note over a: 임대를 잃었다 — 등록도 삭제도 하지 않고 멈춘다
+    Note over st: B 가 등록한 파일은 그대로 남는다
